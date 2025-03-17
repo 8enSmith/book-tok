@@ -260,7 +260,7 @@ function App() {
             displaytitle: book.title || "",
             extract: book.description || "",
             firstPublishYear: book.firstPublishYear || 0,
-            url: `https://openlibrary.org${book.key}` || "",
+            url: book.key ? `https://openlibrary.org${book.key}` : "",
             thumbnail: book.coverUrl 
               ? { source: book.coverUrl, width: 300, height: 450 }
               : { source: "/placeholder-cover.jpg", width: 200, height: 300 }

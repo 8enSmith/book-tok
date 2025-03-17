@@ -1,6 +1,7 @@
 import { Share2, Heart } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLikedArticles } from '../contexts/LikedArticlesContext';
+import { extractColorsFromImage } from '../utils/colorExtractor';
 
 export interface WikiArticle {
     title: string;
@@ -23,14 +24,22 @@ interface WikiCardProps {
 
 export function BookCard({ article }: WikiCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
+    const [backgroundColors, setBackgroundColors] = useState<string[]>(['rgba(0,0,0,0.8)', 'rgba(40,40,40,0.8)']);
     const { toggleLike, isLiked } = useLikedArticles();
 
-    // Add debugging log
-    console.log('Article data:', {
-        title: article.title,
-        displaytitle: article.displaytitle,
-        pageid: article.pageid
-    });
+    // Extract colors when thumbnail is available
+    useEffect(() => {
+        if (article.thumbnail?.source) {
+            extractColorsFromImage(article.thumbnail.source)
+                .then(colors => {
+                    console.log("Setting background colors:", colors);
+                    setBackgroundColors(colors);
+                })
+                .catch(error => {
+                    console.error("Failed to extract colors:", error);
+                });
+        }
+    }, [article.thumbnail?.source]);
 
     const handleShare = async () => {
         if (navigator.share) {
@@ -50,9 +59,18 @@ export function BookCard({ article }: WikiCardProps) {
         }
     };
 
+    // Create the background style with the extracted colors
+    const backgroundStyle = {
+        background: `linear-gradient(to bottom, ${backgroundColors[0]}, ${backgroundColors[1]})`,
+    };
+
     return (
-        <div className="h-screen w-full flex items-center justify-center snap-start relative" onDoubleClick={() => toggleLike(article)}>
-            <div className="h-full w-full relative">
+        <div className="h-screen w-full flex items-center justify-center snap-start relative" 
+             onDoubleClick={() => toggleLike(article)}>
+            {/* Apply the gradient background at the outermost level */}
+            <div className="h-full w-full absolute top-0 left-0" style={backgroundStyle}></div>
+            
+            <div className="h-full w-full relative z-10">
                 {article.thumbnail ? (
                     <div className="absolute inset-0 flex items-center justify-center">
                         <img
@@ -67,19 +85,21 @@ export function BookCard({ article }: WikiCardProps) {
                             onLoad={() => setImageLoaded(true)}
                             onError={(e) => {
                                 console.error('Image failed to load:', e);
-                                setImageLoaded(true); // Show content even if image fails
+                                setImageLoaded(true);
                             }}
+                            crossOrigin="anonymous"
                         />
                         {!imageLoaded && (
                             <div className="absolute inset-0 bg-gray-900 animate-pulse" />
                         )}
-                        <div className="absolute inset-0 bg-gradient-to-b from-black/20 to-black/60" />
+                        <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60" />
                     </div>
                 ) : (
                     <div className="absolute inset-0 bg-gray-900" />
                 )}
-                {/* Content container with z-index to ensure it's above the image */}
-                <div className="absolute backdrop-blur-xs bg-black/30 bottom-[10vh] left-0 right-0 p-6 text-white z-10">
+                
+                {/* Content container */}
+                <div className="absolute backdrop-blur-xs bg-black/30 bottom-[10vh] left-0 right-0 p-6 text-white z-20">
                     <div className="flex justify-between items-start">
                         <h2 className="text-2xl font-bold drop-shadow-lg">{article.displaytitle}</h2>
                         <div className="flex gap-2">
