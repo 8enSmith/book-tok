@@ -3,7 +3,7 @@ import { useState, useCallback } from "react";
 // Define new Book type to replace WikiArticle
 export interface Book {
   title: string;
-  author: string;
+  authors: string[]; // Array of authors instead of single author
   key: string;
   coverId: number;
   coverUrl: string;
@@ -18,6 +18,25 @@ const preloadImage = (src: string): Promise<void> => {
     img.onload = () => resolve();
     img.onerror = reject;
   });
+};
+
+// Function to fetch book description from Works API
+const fetchBookDescription = async (workKey: string): Promise<string | undefined> => {
+  try {
+    const response = await fetch(`https://openlibrary.org${workKey}.json`);
+    const data = await response.json();
+    
+    // Try to get description from different possible formats
+    if (typeof data.description === 'string') {
+      return data.description;
+    } else if (data.description && data.description.value) {
+      return data.description.value;
+    }
+    return undefined;
+  } catch (error) {
+    console.error(`Error fetching description for ${workKey}:`, error);
+    return undefined;
+  }
 };
 
 export function useBookCovers() {
@@ -40,23 +59,38 @@ export function useBookCovers() {
       const data = await response.json();
       
       // Process the book data
-      const newBooks = data.docs
+      const booksWithoutDescriptions = data.docs
         .filter(book => book.cover_i) // Ensure books have covers
         .map((book): Book => {
           const coverId = book.cover_i;
           // Use the large cover images
           const coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
           console.log("coverUrl", coverUrl);
+          
           return {
             title: book.title,
-            author: book.author_name ? book.author_name[0] : "Unknown Author",
+            authors: book.author_name || ["Unknown Author"],
             key: book.key,
             coverId,
             coverUrl,
-            description: book.first_sentence ? book.first_sentence[0] : undefined,
+            description: undefined, // Will be populated later
             olid: book.edition_key ? book.edition_key[0] : undefined
           };
         });
+
+      // Create an array of promises for fetching descriptions in parallel
+      const descriptionPromises = booksWithoutDescriptions.map(book => 
+        fetchBookDescription(book.key)
+      );
+      
+      // Fetch all descriptions in parallel
+      const descriptions = await Promise.all(descriptionPromises);
+      
+      // Assign descriptions to the corresponding books
+      const newBooks = booksWithoutDescriptions.map((book, index) => ({
+        ...book,
+        description: descriptions[index]
+      }));
 
       await Promise.allSettled(
         newBooks.map(book => preloadImage(book.coverUrl))

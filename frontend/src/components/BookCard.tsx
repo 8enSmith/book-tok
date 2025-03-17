@@ -5,6 +5,7 @@ import { useLikedArticles } from '../contexts/LikedArticlesContext';
 export interface WikiArticle {
     title: string;
     displaytitle: string;
+    authors: string[];
     extract: string;
     pageid: number;
     url: string;
@@ -19,7 +20,7 @@ interface WikiCardProps {
     article: WikiArticle;
 }
 
-export function WikiCard({ article }: WikiCardProps) {
+export function BookCard({ article }: WikiCardProps) {
     const [imageLoaded, setImageLoaded] = useState(false);
     const { toggleLike, isLiked } = useLikedArticles();
 
@@ -52,13 +53,16 @@ export function WikiCard({ article }: WikiCardProps) {
         <div className="h-screen w-full flex items-center justify-center snap-start relative" onDoubleClick={() => toggleLike(article)}>
             <div className="h-full w-full relative">
                 {article.thumbnail ? (
-                    <div className="absolute inset-0">
+                    <div className="absolute inset-0 flex items-center justify-center">
                         <img
                             loading="lazy"
                             src={article.thumbnail.source}
                             alt={article.displaytitle}
-                            className={`w-full h-full object-cover transition-opacity duration-300 bg-white ${imageLoaded ? 'opacity-100' : 'opacity-0'
-                                }`}
+                            width={article.thumbnail.width}
+                            height={article.thumbnail.height}
+                            className={`max-h-[80vh] max-w-full transition-opacity duration-300 bg-white ${
+                                imageLoaded ? 'opacity-100' : 'opacity-0'
+                            }`}
                             onLoad={() => setImageLoaded(true)}
                             onError={(e) => {
                                 console.error('Image failed to load:', e);
@@ -75,15 +79,8 @@ export function WikiCard({ article }: WikiCardProps) {
                 )}
                 {/* Content container with z-index to ensure it's above the image */}
                 <div className="absolute backdrop-blur-xs bg-black/30 bottom-[10vh] left-0 right-0 p-6 text-white z-10">
-                    <div className="flex justify-between items-start mb-3">
-                        <a
-                            href={article.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="hover:text-gray-200 transition-colors"
-                        >
-                            <h2 className="text-2xl font-bold drop-shadow-lg">{article.displaytitle}</h2>
-                        </a>
+                    <div className="flex justify-between items-start">
+                        <h2 className="text-2xl font-bold drop-shadow-lg">{article.displaytitle}</h2>
                         <div className="flex gap-2">
                             <button
                                 onClick={() => toggleLike(article)}
@@ -106,6 +103,7 @@ export function WikiCard({ article }: WikiCardProps) {
                             </button>
                         </div>
                     </div>
+                    <h3 className="text-1xl font-bold drop-shadow-lg mb-3">{article.authors.join(', ')}</h3>
                     <p className="text-gray-100 mb-4 drop-shadow-lg line-clamp-6">{article.extract}</p>
                     <a
                         href={article.url}

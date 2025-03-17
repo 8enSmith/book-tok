@@ -1,8 +1,7 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { WikiCard } from "./components/WikiCard";
+import { BookCard } from "./components/BookCard";
 import { Loader2, Search, X, Download } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
-import { LanguageSelector } from "./components/LanguageSelector";
 import { useLikedArticles } from "./contexts/LikedArticlesContext";
 import { useBookCovers } from "./hooks/useBookCovers";
 
@@ -92,7 +91,6 @@ function App() {
         >
           Likes
         </button>
-        <LanguageSelector />
       </div>
 
       {showAbout && (
@@ -253,10 +251,11 @@ function App() {
       )}
   
       {books.map((book) => (
-        <WikiCard
+        <BookCard
           key={book.key}
           article={{
             //pageid: book.key || 0,
+            authors: book.authors || ["Unknown Author"],
             title: book.title || "",
             displaytitle: book.title || "",
             extract: book.description || "",
