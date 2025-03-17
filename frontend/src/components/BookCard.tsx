@@ -72,14 +72,14 @@ export function BookCard({ article }: WikiCardProps) {
             
             <div className="h-full w-full relative z-10">
                 {article.thumbnail ? (
-                    <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-start pt-[15vh] justify-center">
                         <img
                             loading="lazy"
                             src={article.thumbnail.source}
                             alt={article.displaytitle}
                             width={article.thumbnail.width}
                             height={article.thumbnail.height}
-                            className={`max-h-[80vh] max-w-full transition-opacity duration-300 bg-white ${
+                            className={`max-h-[65vh] max-w-full transition-opacity duration-300 bg-white ${
                                 imageLoaded ? 'opacity-100' : 'opacity-0'
                             }`}
                             onLoad={() => setImageLoaded(true)}
@@ -99,7 +99,7 @@ export function BookCard({ article }: WikiCardProps) {
                 )}
                 
                 {/* Content container */}
-                <div className="absolute backdrop-blur-xs bg-black/30 bottom-[10vh] left-0 right-0 p-6 text-white z-20">
+                <div className="absolute backdrop-blur-xs bg-black/30 bottom-[5vh] left-0 right-0 p-6 text-white z-20">
                     <div className="flex justify-between items-start">
                         <h2 className="text-2xl font-bold drop-shadow-lg">{article.displaytitle}</h2>
                         <div className="flex gap-2">
