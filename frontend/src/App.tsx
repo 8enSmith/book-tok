@@ -74,7 +74,7 @@ function App() {
           onClick={() => window.location.reload()}
           className="text-2xl font-bold text-white drop-shadow-lg hover:opacity-80 transition-opacity"
         >
-          BookTok
+          Book-Tok
         </button>
       </div>
 
@@ -102,7 +102,7 @@ function App() {
             >
               ✕
             </button>
-            <h2 className="text-xl font-bold mb-4">About BookTok</h2>
+            <h2 className="text-xl font-bold mb-4">About Book-Tok</h2>
             <p className="mb-4">
               A TikTok-style interface for exploring random books from Open Library.
             </p>
@@ -259,6 +259,7 @@ function App() {
             title: book.title || "",
             displaytitle: book.title || "",
             extract: book.description || "",
+            firstPublishYear: book.firstPublishYear || 0,
             //url: `https://openlibrary.org${book.key}` || "",
             thumbnail: book.coverUrl ? { source: book.coverUrl } : undefined
           }}

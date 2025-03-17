@@ -4,6 +4,7 @@ import { useLikedArticles } from '../contexts/LikedArticlesContext';
 
 export interface WikiArticle {
     title: string;
+    firstPublishYear: number;
     displaytitle: string;
     authors: string[];
     extract: string;
@@ -103,7 +104,7 @@ export function BookCard({ article }: WikiCardProps) {
                             </button>
                         </div>
                     </div>
-                    <h3 className="text-1xl font-bold drop-shadow-lg mb-3">{article.authors.join(', ')}</h3>
+                    <h3 className="text-1xl font-bold drop-shadow-lg mb-3">{`${article.authors.join(', ')} (${article.firstPublishYear})`}</h3>
                     <p className="text-gray-100 mb-4 drop-shadow-lg line-clamp-6">{article.extract}</p>
                     <a
                         href={article.url}

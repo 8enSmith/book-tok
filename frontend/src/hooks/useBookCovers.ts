@@ -3,6 +3,7 @@ import { useState, useCallback } from "react";
 // Define new Book type to replace WikiArticle
 export interface Book {
   title: string;
+  firstPublishYear: number;
   authors: string[]; // Array of authors instead of single author
   key: string;
   coverId: number;
@@ -45,8 +46,12 @@ export function useBookCovers() {
   const [buffer, setBuffer] = useState<Book[]>([]);
 
   const fetchBooks = async (forBuffer = false) => {
-    if (loading) return;
+    if (loading) {
+      return;
+    }
+
     setLoading(true);
+    
     try {
       // Generate a random offset for variety in results
       const randomOffset = Math.floor(Math.random() * 1000);
@@ -69,6 +74,7 @@ export function useBookCovers() {
           
           return {
             title: book.title,
+            firstPublishYear: book.first_publish_year,
             authors: book.author_name || ["Unknown Author"],
             key: book.key,
             coverId,
