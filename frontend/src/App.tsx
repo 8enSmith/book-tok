@@ -254,14 +254,16 @@ function App() {
         <BookCard
           key={book.key}
           article={{
-            //pageid: book.key || 0,
+            pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
             authors: book.authors || ["Unknown Author"],
             title: book.title || "",
             displaytitle: book.title || "",
             extract: book.description || "",
             firstPublishYear: book.firstPublishYear || 0,
-            //url: `https://openlibrary.org${book.key}` || "",
-            thumbnail: book.coverUrl ? { source: book.coverUrl } : undefined
+            url: `https://openlibrary.org${book.key}` || "",
+            thumbnail: book.coverUrl 
+              ? { source: book.coverUrl, width: 300, height: 450 }
+              : { source: "/placeholder-cover.jpg", width: 200, height: 300 }
           }}
         />
       ))}

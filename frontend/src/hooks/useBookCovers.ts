@@ -64,23 +64,37 @@ export function useBookCovers() {
       const data = await response.json();
       
       // Process the book data
-      const booksWithoutDescriptions = data.docs
-        .filter(book => book.cover_i) // Ensure books have covers
-        .map((book): Book => {
-          const coverId = book.cover_i;
+      // Define interfaces for the Open Library API response
+      interface OpenLibraryDoc {
+        title: string;
+        first_publish_year: number;
+        author_name?: string[];
+        key: string;
+        cover_i: number;
+        edition_key?: string[];
+      }
+
+      interface OpenLibrarySearchResponse {
+        docs: OpenLibraryDoc[];
+      }
+
+      const booksWithoutDescriptions: Book[] = (data as OpenLibrarySearchResponse).docs
+        .filter((book: OpenLibraryDoc) => book.cover_i) // Ensure books have covers
+        .map((book: OpenLibraryDoc): Book => {
+          const coverId: number = book.cover_i;
           // Use the large cover images
-          const coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+          const coverUrl: string = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
           console.log("coverUrl", coverUrl);
           
           return {
-            title: book.title,
-            firstPublishYear: book.first_publish_year,
-            authors: book.author_name || ["Unknown Author"],
-            key: book.key,
-            coverId,
-            coverUrl,
-            description: undefined, // Will be populated later
-            olid: book.edition_key ? book.edition_key[0] : undefined
+        title: book.title,
+        firstPublishYear: book.first_publish_year,
+        authors: book.author_name || ["Unknown Author"],
+        key: book.key,
+        coverId,
+        coverUrl,
+        description: undefined, // Will be populated later
+        olid: book.edition_key ? book.edition_key[0] : undefined
           };
         });
 
