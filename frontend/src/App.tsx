@@ -1,71 +1,69 @@
-import { useEffect, useRef, useCallback, useState } from "react";
-import { BookCard } from "./components/BookCard";
-import { Loader2, Search, X, Download } from "lucide-react";
-import { Analytics } from "@vercel/analytics/react";
-import { useLikedArticles } from "./contexts/LikedArticlesContext";
-import { useBookCovers } from "./hooks/useBookCovers";
+import { useEffect, useRef, useCallback, useState } from 'react'
+import { BookCard } from './components/BookCard'
+import { Loader2, Search, X, Download } from 'lucide-react'
+import { Analytics } from '@vercel/analytics/react'
+import { useLikedArticles } from './contexts/LikedArticlesContext'
+import { useBookCovers } from './hooks/useBookCovers'
 
 function App() {
-  const [showAbout, setShowAbout] = useState(false);
-  const [showLikes, setShowLikes] = useState(false);
-  const { books, loading, fetchBooks } = useBookCovers();
-  const { likedArticles, toggleLike } = useLikedArticles();
-  const observerTarget = useRef(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [showAbout, setShowAbout] = useState(false)
+  const [showLikes, setShowLikes] = useState(false)
+  const { books, loading, fetchBooks } = useBookCovers()
+  const { likedArticles, toggleLike } = useLikedArticles()
+  const observerTarget = useRef(null)
+  const [searchQuery, setSearchQuery] = useState('')
 
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
-      const [target] = entries;
+      const [target] = entries
       if (target.isIntersecting && !loading) {
-        fetchBooks();
+        fetchBooks()
       }
     },
-    [loading, fetchBooks]
-  );
+    [loading, fetchBooks],
+  )
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleObserver, {
       threshold: 0.1,
-      rootMargin: "100px",
-    });
+      rootMargin: '100px',
+    })
 
     if (observerTarget.current) {
-      observer.observe(observerTarget.current);
+      observer.observe(observerTarget.current)
     }
 
-    return () => observer.disconnect();
-  }, [handleObserver]);
+    return () => observer.disconnect()
+  }, [handleObserver])
 
   useEffect(() => {
-    fetchBooks();
-  }, []);
+    fetchBooks()
+  }, [])
 
   const filteredLikedArticles = likedArticles.filter(
-    (article) =>
+    article =>
       article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.extract.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+      article.extract.toLowerCase().includes(searchQuery.toLowerCase()),
+  )
 
   const handleExport = () => {
-    const simplifiedArticles = likedArticles.map((article) => ({
+    const simplifiedArticles = likedArticles.map(article => ({
       title: article.title,
       url: article.url,
       extract: article.extract,
       thumbnail: article.thumbnail?.source || null,
-    }));
+    }))
 
-    const dataStr = JSON.stringify(simplifiedArticles, null, 2);
-    const dataUri =
-      "data:application/json;charset=utf-8," + encodeURIComponent(dataStr);
+    const dataStr = JSON.stringify(simplifiedArticles, null, 2)
+    const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
 
-    const exportFileDefaultName = `wikitok-favorites-${new Date().toISOString().split("T")[0]
-      }.json`;
+    const exportFileDefaultName = `wikitok-favorites-${new Date().toISOString().split('T')[0]}.json`
 
-    const linkElement = document.createElement("a");
-    linkElement.setAttribute("href", dataUri);
-    linkElement.setAttribute("download", exportFileDefaultName);
-    linkElement.click();
-  };
+    const linkElement = document.createElement('a')
+    linkElement.setAttribute('href', dataUri)
+    linkElement.setAttribute('download', exportFileDefaultName)
+    linkElement.click()
+  }
 
   return (
     <div className="h-screen w-full bg-black text-white overflow-y-scroll snap-y snap-mandatory hide-scroll">
@@ -107,7 +105,7 @@ function App() {
               A TikTok style interface for exploring random books from Open Library.
             </p>
             <p className="text-white/70">
-              Made with ❤️ by{" "}
+              Made with ❤️ by{' '}
               <a
                 href="https://github.com/8enSmith"
                 target="_blank"
@@ -118,18 +116,18 @@ function App() {
               </a>
             </p>
             <p className="text-white/70">
-              Based on {" "}
+              Based on{' '}
               <a
-                href="https://wikitok.net/"
+                href="https://wikitok.io/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white hover:underline"
               >
-               WikiTok
+                WikiTok
               </a>
             </p>
             <p className="text-white/70 mt-2">
-              Check out the code on{" "}
+              Check out the code on{' '}
               <a
                 href="https://github.com/8enSmith/book-tok"
                 target="_blank"
@@ -140,7 +138,7 @@ function App() {
               </a>
             </p>
             <p className="text-white/70 mt-2">
-              If you enjoy this project, you can{" "}
+              If you enjoy this project, you can{' '}
               <a
                 href="https://buymeacoffee.com/8enSmith"
                 target="_blank"
@@ -153,8 +151,9 @@ function App() {
             </p>
           </div>
           <div
-            className={`w-full h-full z-[40] top-1 left-1  bg-[rgb(28 25 23 / 43%)] fixed  ${showAbout ? "block" : "hidden"
-              }`}
+            className={`w-full h-full z-[40] top-1 left-1  bg-[rgb(28 25 23 / 43%)] fixed  ${
+              showAbout ? 'block' : 'hidden'
+            }`}
             onClick={() => setShowAbout(false)}
           ></div>
         </div>
@@ -188,7 +187,7 @@ function App() {
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={e => setSearchQuery(e.target.value)}
                 placeholder="Search liked books..."
                 className="w-full bg-gray-800 text-white px-4 py-2 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
@@ -198,11 +197,11 @@ function App() {
             <div className="flex-1 overflow-y-auto min-h-0">
               {filteredLikedArticles.length === 0 ? (
                 <p className="text-white/70">
-                  {searchQuery ? "No matches found." : "No liked books yet."}
+                  {searchQuery ? 'No matches found.' : 'No liked books yet.'}
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {filteredLikedArticles.map((article) => (
+                  {filteredLikedArticles.map(article => (
                     <div
                       key={`${article.pageid}-${Date.now()}`}
                       className="flex gap-4 items-start group"
@@ -232,9 +231,7 @@ function App() {
                             <X className="w-4 h-4" />
                           </button>
                         </div>
-                        <p className="text-sm text-white/70 line-clamp-2">
-                          {article.extract}
-                        </p>
+                        <p className="text-sm text-white/70 line-clamp-2">{article.extract}</p>
                       </div>
                     </div>
                   ))}
@@ -243,27 +240,28 @@ function App() {
             </div>
           </div>
           <div
-            className={`w-full h-full z-[40] top-1 left-1  bg-[rgb(28 25 23 / 43%)] fixed  ${showLikes ? "block" : "hidden"
-              }`}
+            className={`w-full h-full z-[40] top-1 left-1  bg-[rgb(28 25 23 / 43%)] fixed  ${
+              showLikes ? 'block' : 'hidden'
+            }`}
             onClick={() => setShowLikes(false)}
           ></div>
         </div>
       )}
-  
-      {books.map((book) => (
+
+      {books.map(book => (
         <BookCard
           key={book.key}
           article={{
             pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
-            authors: book.authors || ["Unknown Author"],
-            title: book.title || "",
-            displaytitle: book.title || "",
-            extract: book.description || "",
+            authors: book.authors || ['Unknown Author'],
+            title: book.title || '',
+            displaytitle: book.title || '',
+            extract: book.description || '',
             firstPublishYear: book.firstPublishYear || 0,
-            url: book.key ? `https://openlibrary.org${book.key}` : "",
-            thumbnail: book.coverUrl 
+            url: book.key ? `https://openlibrary.org${book.key}` : '',
+            thumbnail: book.coverUrl
               ? { source: book.coverUrl, width: 300, height: 450 }
-              : { source: "/placeholder-cover.jpg", width: 200, height: 300 }
+              : { source: '/placeholder-cover.jpg', width: 200, height: 300 },
           }}
         />
       ))}
@@ -276,7 +274,7 @@ function App() {
       )}
       <Analytics />
     </div>
-  );
+  )
 }
 
-export default App;
+export default App
