@@ -2,6 +2,8 @@
 
 A TikTok-style interface for exploring random Open Library books.
 
+This project is based on the excellent [WikiTok](https://github.com/IsaacGemal/wikitok)!
+
 ## Features
 
 - Vertical scrolling feed of random Wikipedia articles
