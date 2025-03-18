@@ -104,7 +104,7 @@ function App() {
             </button>
             <h2 className="text-xl font-bold mb-4">About Book-Tok</h2>
             <p className="mb-4">
-              A TikTok-style interface for exploring random books from Open Library.
+              A TikTok style interface for exploring random books from Open Library.
             </p>
             <p className="text-white/70">
               Made with ❤️ by{" "}
@@ -118,20 +118,20 @@ function App() {
               </a>
             </p>
             <p className="text-white/70">
-              Based on WikiTok by{" "}
+              Based on {" "}
               <a
-                href="https://x.com/Aizkmusic"
+                href="https://wikitok.net/"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white hover:underline"
               >
-                @Aizkmusic
+               WikiTok
               </a>
             </p>
             <p className="text-white/70 mt-2">
               Check out the code on{" "}
               <a
-                href="https://github.com/8enSmith/booktok"
+                href="https://github.com/8enSmith/book-tok"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white hover:underline"
