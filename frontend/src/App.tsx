@@ -1,15 +1,14 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { WikiCard } from "./components/WikiCard";
+import { BookCard } from "./components/BookCard";
 import { Loader2, Search, X, Download } from "lucide-react";
 import { Analytics } from "@vercel/analytics/react";
-import { LanguageSelector } from "./components/LanguageSelector";
 import { useLikedArticles } from "./contexts/LikedArticlesContext";
-import { useWikiArticles } from "./hooks/useWikiArticles";
+import { useBookCovers } from "./hooks/useBookCovers";
 
 function App() {
   const [showAbout, setShowAbout] = useState(false);
   const [showLikes, setShowLikes] = useState(false);
-  const { articles, loading, fetchArticles } = useWikiArticles();
+  const { books, loading, fetchBooks } = useBookCovers();
   const { likedArticles, toggleLike } = useLikedArticles();
   const observerTarget = useRef(null);
   const [searchQuery, setSearchQuery] = useState("");
@@ -18,10 +17,10 @@ function App() {
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries;
       if (target.isIntersecting && !loading) {
-        fetchArticles();
+        fetchBooks();
       }
     },
-    [loading, fetchArticles]
+    [loading, fetchBooks]
   );
 
   useEffect(() => {
@@ -38,7 +37,7 @@ function App() {
   }, [handleObserver]);
 
   useEffect(() => {
-    fetchArticles();
+    fetchBooks();
   }, []);
 
   const filteredLikedArticles = likedArticles.filter(
@@ -75,7 +74,7 @@ function App() {
           onClick={() => window.location.reload()}
           className="text-2xl font-bold text-white drop-shadow-lg hover:opacity-80 transition-opacity"
         >
-          WikiTok
+          Book-Tok
         </button>
       </div>
 
@@ -92,7 +91,6 @@ function App() {
         >
           Likes
         </button>
-        <LanguageSelector />
       </div>
 
       {showAbout && (
@@ -104,25 +102,36 @@ function App() {
             >
               ✕
             </button>
-            <h2 className="text-xl font-bold mb-4">About WikiTok</h2>
+            <h2 className="text-xl font-bold mb-4">About Book-Tok</h2>
             <p className="mb-4">
-              A TikTok-style interface for exploring random Wikipedia articles.
+              A TikTok style interface for exploring random books from Open Library.
             </p>
             <p className="text-white/70">
               Made with ❤️ by{" "}
               <a
-                href="https://x.com/Aizkmusic"
+                href="https://github.com/8enSmith"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white hover:underline"
               >
-                @Aizkmusic
+                @8enSmith
+              </a>
+            </p>
+            <p className="text-white/70">
+              Based on {" "}
+              <a
+                href="https://wikitok.net/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-white hover:underline"
+              >
+               WikiTok
               </a>
             </p>
             <p className="text-white/70 mt-2">
               Check out the code on{" "}
               <a
-                href="https://github.com/IsaacGemal/wikitok"
+                href="https://github.com/8enSmith/book-tok"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white hover:underline"
@@ -133,7 +142,7 @@ function App() {
             <p className="text-white/70 mt-2">
               If you enjoy this project, you can{" "}
               <a
-                href="https://buymeacoffee.com/aizk"
+                href="https://buymeacoffee.com/8enSmith"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-white hover:underline"
@@ -240,9 +249,23 @@ function App() {
           ></div>
         </div>
       )}
-
-      {articles.map((article) => (
-        <WikiCard key={article.pageid} article={article} />
+  
+      {books.map((book) => (
+        <BookCard
+          key={book.key}
+          article={{
+            pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
+            authors: book.authors || ["Unknown Author"],
+            title: book.title || "",
+            displaytitle: book.title || "",
+            extract: book.description || "",
+            firstPublishYear: book.firstPublishYear || 0,
+            url: book.key ? `https://openlibrary.org${book.key}` : "",
+            thumbnail: book.coverUrl 
+              ? { source: book.coverUrl, width: 300, height: 450 }
+              : { source: "/placeholder-cover.jpg", width: 200, height: 300 }
+          }}
+        />
       ))}
       <div ref={observerTarget} className="h-10 -mt-1" />
       {loading && (

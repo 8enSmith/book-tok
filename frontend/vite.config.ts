@@ -11,15 +11,9 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
-        name: "WikiTok",
-        short_name: "WikiTok",
-        icons: [
-          {
-            src: "/wiki-logo.svg",
-            sizes: "any",
-            type: "image/svg+xml",
-          },
-        ],
+        name: "Book-Tok",
+        short_name: "Book-Tok",
+        icons: [],
         start_url: "/",
         display: "standalone",
         background_color: "#ffffff",
