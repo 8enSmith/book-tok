@@ -1,4 +1,4 @@
-# WikiTok
+# Book-Tok
 
 A TikTok-style interface for exploring random Open Library books.
 
