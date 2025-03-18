@@ -38,7 +38,7 @@ No backend required!
 
 ## Demo
 
-Check it out here at [book-tok.vercel.app](https://book-tok.vercel.app)
+Check it out here at [book-tok.net](https://book-tok.net)
 
 ## Contributing
 
