@@ -171,12 +171,12 @@ function App() {
             </button>
 
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold">Liked Articles</h2>
+              <h2 className="text-xl font-bold">Liked Books</h2>
               {likedArticles.length > 0 && (
                 <button
                   onClick={handleExport}
                   className="flex items-center gap-2 px-3 py-1.5 text-sm bg-gray-800 hover:bg-gray-700 rounded-lg transition-colors"
-                  title="Export liked articles"
+                  title="Export liked books"
                 >
                   <Download className="w-4 h-4" />
                   Export
@@ -189,7 +189,7 @@ function App() {
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search liked articles..."
+                placeholder="Search liked books..."
                 className="w-full bg-gray-800 text-white px-4 py-2 pl-10 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <Search className="w-5 h-5 text-white/50 absolute left-3 top-1/2 transform -translate-y-1/2" />
@@ -198,7 +198,7 @@ function App() {
             <div className="flex-1 overflow-y-auto min-h-0">
               {filteredLikedArticles.length === 0 ? (
                 <p className="text-white/70">
-                  {searchQuery ? "No matches found." : "No liked articles yet."}
+                  {searchQuery ? "No matches found." : "No liked books yet."}
                 </p>
               ) : (
                 <div className="space-y-4">

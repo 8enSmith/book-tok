@@ -1,19 +1,19 @@
 import { FC } from 'react';
 
-interface ArticleProps {
+interface BookProps {
   title: string;
   content: string;
   image?: string;
 }
 
-const Article: FC<ArticleProps> = ({ title, content, image }) => {
+const Book: FC<BookProps> = ({ title, content, image }) => {
   return (
     <article 
-      className="article-container"
+      className="book-container"
       role="article"
-      aria-labelledby="article-title"
+      aria-labelledby="book-title"
     >
-      <h2 id="article-title" className="article-title">
+      <h2 id="book-title" className="book-title">
         {title}
       </h2>
       
@@ -21,14 +21,14 @@ const Article: FC<ArticleProps> = ({ title, content, image }) => {
         <img 
           src={image} 
           alt={`Illustration for article: ${title}`}
-          className="article-image"
+          className="book-image"
         />
       )}
       
       <div 
-        className="article-content"
+        className="book-content"
         role="contentinfo"
-        aria-label="Article content"
+        aria-label="Book content"
       >
         {content}
       </div>
@@ -36,4 +36,4 @@ const Article: FC<ArticleProps> = ({ title, content, image }) => {
   );
 };
 
-export default Article;
+export default Book;
