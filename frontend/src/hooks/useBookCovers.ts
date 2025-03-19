@@ -84,7 +84,6 @@ export function useBookCovers() {
           const coverId: number = book.cover_i
           // Use the large cover images
           const coverUrl: string = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
-          console.log('coverUrl', coverUrl)
 
           return {
             title: book.title,
@@ -98,26 +97,63 @@ export function useBookCovers() {
           }
         })
 
-      // Create an array of promises for fetching descriptions in parallel
-      const descriptionPromises = booksWithoutDescriptions.map(book =>
-        fetchBookDescription(book.key),
-      )
-
-      // Fetch all descriptions in parallel
-      const descriptions = await Promise.all(descriptionPromises)
-
-      // Assign descriptions to the corresponding books
-      const newBooks = booksWithoutDescriptions.map((book, index) => ({
-        ...book,
-        description: descriptions[index],
-      }))
-
-      await Promise.allSettled(newBooks.map(book => preloadImage(book.coverUrl)))
-
+      // Add books to state immediately before fetching descriptions
+      // This allows displaying the books faster
       if (forBuffer) {
-        setBuffer(newBooks)
+        setBuffer(booksWithoutDescriptions)
       } else {
-        setBooks(prev => [...prev, ...newBooks])
+        setBooks(prev => [...prev, ...booksWithoutDescriptions])
+      }
+      
+      // Preload the first few images immediately
+      if (booksWithoutDescriptions.length > 0) {
+        // Only preload the first 2-3 images immediately
+        booksWithoutDescriptions.slice(0, 3).forEach(book => 
+          preloadImage(book.coverUrl).catch(console.error)
+        )
+      }
+
+      // Fetch descriptions in the background
+      const enhanceWithDescriptions = async () => {
+        try {
+          // Create an array of promises for fetching descriptions in parallel
+          const descriptionPromises = booksWithoutDescriptions.map(book =>
+            fetchBookDescription(book.key),
+          )
+
+          // Fetch all descriptions in parallel
+          const descriptions = await Promise.all(descriptionPromises)
+
+          // Assign descriptions to the corresponding books
+          const enhancedBooks = booksWithoutDescriptions.map((book, index) => ({
+            ...book,
+            description: descriptions[index],
+          }))
+
+          // Update books with descriptions
+          if (forBuffer) {
+            setBuffer(enhancedBooks)
+          } else {
+            setBooks(prev => 
+              prev.map(book => {
+                const enhancedBook = enhancedBooks.find(eb => eb.key === book.key)
+                return enhancedBook || book
+              })
+            )
+          }
+          
+          // Preload remaining images in the background
+          Promise.allSettled(enhancedBooks.slice(1).map(book => preloadImage(book.coverUrl)))
+        } catch (error) {
+          console.error('Error enhancing books with descriptions:', error)
+        }
+      }
+
+      // Start the background process
+      enhanceWithDescriptions()
+      
+      // If we're loading the main list, also start preparing the buffer
+      if (!forBuffer) {
         fetchBooks(true)
       }
     } catch (error) {
