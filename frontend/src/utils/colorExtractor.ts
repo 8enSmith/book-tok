@@ -36,7 +36,6 @@ export function extractColorsFromImage(src: string): Promise<string[]> {
           canvas.height / 3,
         )
 
-        console.log('Extracted colors:', topColor, bottomColor)
         resolve([topColor, bottomColor])
       } catch (error) {
         console.error('Color extraction error:', error)

@@ -35,7 +35,6 @@ export function BookCard({ article }: WikiCardProps) {
     if (article.thumbnail?.source) {
       extractColorsFromImage(article.thumbnail.source)
         .then(colors => {
-          console.log('Setting background colors:', colors)
           setBackgroundColors(colors)
         })
         .catch(error => {

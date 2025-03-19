@@ -2,8 +2,11 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { BookCard } from './components/BookCard'
 import { Loader2, Search, X, Download } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
+import { injectSpeedInsights } from '@vercel/speed-insights';
 import { useLikedArticles } from './contexts/LikedArticlesContext'
 import { useBookCovers } from './hooks/useBookCovers'
+
+injectSpeedInsights();
 
 function App() {
   const [showAbout, setShowAbout] = useState(false)
@@ -248,32 +251,39 @@ function App() {
         </div>
       )}
 
-      {books.map(book => (
-        <BookCard
-          key={book.key}
-          article={{
-            pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
-            authors: book.authors || ['Unknown Author'],
-            title: book.title || '',
-            displaytitle: book.title || '',
-            extract: book.description || '',
-            firstPublishYear: book.firstPublishYear || 0,
-            url: book.key ? `https://openlibrary.org${book.key}` : '',
-            thumbnail: book.coverUrl
-              ? { source: book.coverUrl, width: 300, height: 450 }
-              : { source: '/placeholder-cover.jpg', width: 200, height: 300 },
-          }}
-        />
-      ))}
-      <div ref={observerTarget} className="h-10 -mt-1" />
-      {loading && (
+      {books.length === 0 && loading ? (
         <div className="h-screen w-full flex items-center justify-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading...</span>
+          <span>Loading books...</span>
+        </div>
+      ) : (
+        books.map(book => (
+          <BookCard
+            key={book.key}
+            article={{
+              pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
+              authors: book.authors || ['Unknown Author'],
+              title: book.title || '',
+              displaytitle: book.title || '',
+              extract: book.description || 'Loading description...',
+              firstPublishYear: book.firstPublishYear || 0,
+              url: book.key ? `https://openlibrary.org${book.key}` : '',
+              thumbnail: book.coverUrl
+                ? { source: book.coverUrl, width: 300, height: 450 }
+                : { source: '/placeholder-cover.jpg', width: 200, height: 300 },
+            }}
+          />
+        ))
+      )}
+      <div ref={observerTarget} className="h-10 -mt-1" />
+      {loading && books.length > 0 && (
+        <div className="h-20 w-full flex items-center justify-center gap-2">
+          <Loader2 className="h-6 w-6 animate-spin" />
+          <span>Loading more...</span>
         </div>
       )}
       <Analytics />
-    </div>
+      </div>
   )
 }
 
