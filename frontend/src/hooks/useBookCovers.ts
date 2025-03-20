@@ -45,7 +45,7 @@ export function useBookCovers() {
   const [loading, setLoading] = useState(false)
   const [buffer, setBuffer] = useState<Book[]>([])
 
-  const fetchBooks = async (forBuffer = false) => {
+  const fetchBooks = useCallback(async (forBuffer = false) => {
     if (loading) {
       return
     }
@@ -58,7 +58,7 @@ export function useBookCovers() {
 
       // Using Open Library search API to get random books
       const response = await fetch(
-        `https://openlibrary.org/search.json?q=subject:fiction&limit=20&offset=${randomOffset}&has_fulltext=true`,
+        `https://openlibrary.org/search.json?q=subject:fiction&limit=5&offset=${randomOffset}&has_fulltext=true`,
       )
 
       const data = await response.json()
@@ -104,13 +104,13 @@ export function useBookCovers() {
       } else {
         setBooks(prev => [...prev, ...booksWithoutDescriptions])
       }
-      
+
       // Preload the first few images immediately
       if (booksWithoutDescriptions.length > 0) {
         // Only preload the first 2-3 images immediately
-        booksWithoutDescriptions.slice(0, 3).forEach(book => 
-          preloadImage(book.coverUrl).catch(console.error)
-        )
+        booksWithoutDescriptions
+          .slice(0, 3)
+          .forEach(book => preloadImage(book.coverUrl).catch(console.error))
       }
 
       // Fetch descriptions in the background
@@ -134,14 +134,14 @@ export function useBookCovers() {
           if (forBuffer) {
             setBuffer(enhancedBooks)
           } else {
-            setBooks(prev => 
+            setBooks(prev =>
               prev.map(book => {
                 const enhancedBook = enhancedBooks.find(eb => eb.key === book.key)
                 return enhancedBook || book
-              })
+              }),
             )
           }
-          
+
           // Preload remaining images in the background
           Promise.allSettled(enhancedBooks.slice(1).map(book => preloadImage(book.coverUrl)))
         } catch (error) {
@@ -151,7 +151,7 @@ export function useBookCovers() {
 
       // Start the background process
       enhanceWithDescriptions()
-      
+
       // If we're loading the main list, also start preparing the buffer
       if (!forBuffer) {
         fetchBooks(true)
@@ -160,7 +160,7 @@ export function useBookCovers() {
       console.error('Error fetching books:', error)
     }
     setLoading(false)
-  }
+  }, [loading, setLoading, setBooks, setBuffer])
 
   const getMoreBooks = useCallback(() => {
     if (buffer.length > 0) {
@@ -170,7 +170,7 @@ export function useBookCovers() {
     } else {
       fetchBooks(false)
     }
-  }, [buffer])
+  }, [buffer, fetchBooks])
 
   return { books, loading, fetchBooks: getMoreBooks }
 }

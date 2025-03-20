@@ -1,6 +1,6 @@
 import { Share2, Heart } from 'lucide-react'
 import { useState, useEffect } from 'react'
-import { useLikedArticles } from '../contexts/LikedArticlesContext'
+import { useLikedArticles } from '../hooks/useLikedArticles'
 import { extractColorsFromImage } from '../utils/colorExtractor'
 
 export interface WikiArticle {
@@ -66,6 +66,18 @@ export function BookCard({ article }: WikiCardProps) {
     background: `linear-gradient(to bottom, ${backgroundColors[0]}, ${backgroundColors[1]})`,
   }
 
+  // Function to generate different sized image URLs
+  const getResponsiveImageUrl = (originalUrl: string, size: string): string => {
+    // Handle Open Library images
+    if (originalUrl.includes('openlibrary.org')) {
+      // Replace the size identifier (e.g., -L.jpg to -M.jpg)
+      return originalUrl.replace(/-[SML]\.(jpg|jpeg|png)$/i, `-${size}.$1`);
+    }
+    
+    // For general URLs, you could add more rules for other image sources
+    return originalUrl;
+  };
+
   return (
     <div
       className="h-screen w-full flex items-center justify-center snap-start relative"
@@ -77,22 +89,39 @@ export function BookCard({ article }: WikiCardProps) {
       <div className="h-full w-full relative z-10">
         {article.thumbnail ? (
           <div className="absolute inset-0 flex items-start pt-[15vh] justify-center">
-            <img
-              loading="lazy"
-              src={article.thumbnail.source}
-              alt={article.displaytitle}
-              width={article.thumbnail.width}
-              height={article.thumbnail.height}
-              className={`max-h-[65vh] max-w-full transition-opacity duration-300 bg-white ${
-                imageLoaded ? 'opacity-100' : 'opacity-0'
-              }`}
-              onLoad={() => setImageLoaded(true)}
-              onError={e => {
-                console.error('Image failed to load:', e)
-                setImageLoaded(true)
-              }}
-              crossOrigin="anonymous"
-            />
+            <picture>
+              {/* Provide different source sizes */}
+              <source
+                media="(max-width: 640px)"
+                srcSet={getResponsiveImageUrl(article.thumbnail.source, 'M')}
+              />
+              <source
+                media="(min-width: 641px)"
+                srcSet={getResponsiveImageUrl(article.thumbnail.source, 'L')}
+              />
+              <img
+                src={article.thumbnail.source}
+                alt={article.displaytitle}
+                width={article.thumbnail.width}
+                height={article.thumbnail.height}
+                className={`max-h-[65vh] max-w-full transition-opacity duration-300 bg-white ${
+                  imageLoaded ? 'opacity-100' : 'opacity-0'
+                }`}
+                srcSet={`
+                  ${getResponsiveImageUrl(article.thumbnail.source, 'S')} 300w,
+                  ${getResponsiveImageUrl(article.thumbnail.source, 'M')} 600w,
+                  ${article.thumbnail.source} 1200w
+                `}
+                sizes="(max-width: 640px) 90vw, (max-width: 1024px) 75vw, 50vw"
+                loading="eager"
+                onLoad={() => setImageLoaded(true)}
+                onError={e => {
+                  console.error('Image failed to load:', e)
+                  setImageLoaded(true)
+                }}
+                crossOrigin="anonymous"
+              />
+            </picture>
             {!imageLoaded && <div className="absolute inset-0 bg-gray-900 animate-pulse" />}
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60" />
           </div>

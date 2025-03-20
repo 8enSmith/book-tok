@@ -13,7 +13,7 @@ export function extractColorsFromImage(src: string): Promise<string[]> {
     img.onload = () => {
       try {
         const canvas = document.createElement('canvas')
-        const ctx = canvas.getContext('2d')
+        const ctx = canvas.getContext('2d', { willReadFrequently: true })
         if (!ctx) {
           resolve(['rgba(0,0,0,0.8)', 'rgba(40,40,40,0.8)'])
           return

@@ -2,11 +2,11 @@ import { useEffect, useRef, useCallback, useState } from 'react'
 import { BookCard } from './components/BookCard'
 import { Loader2, Search, X, Download } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
-import { injectSpeedInsights } from '@vercel/speed-insights';
-import { useLikedArticles } from './contexts/LikedArticlesContext'
+import { injectSpeedInsights } from '@vercel/speed-insights'
+import { useLikedArticles } from './hooks/useLikedArticles'
 import { useBookCovers } from './hooks/useBookCovers'
 
-injectSpeedInsights();
+injectSpeedInsights()
 
 function App() {
   const [showAbout, setShowAbout] = useState(false)
@@ -41,6 +41,7 @@ function App() {
 
   useEffect(() => {
     fetchBooks()
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const filteredLikedArticles = likedArticles.filter(
@@ -118,7 +119,7 @@ function App() {
                 @8enSmith
               </a>
             </p>
-            <p className="text-white/70">
+            <p className="text-white/70 mt-2">
               Based on{' '}
               <a
                 href="https://wikitok.io/"
@@ -283,7 +284,7 @@ function App() {
         </div>
       )}
       <Analytics />
-      </div>
+    </div>
   )
 }
 
