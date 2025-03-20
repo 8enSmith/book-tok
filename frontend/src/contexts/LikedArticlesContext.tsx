@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
+import { createContext, useState, useEffect, ReactNode } from 'react'
 import type { WikiArticle } from '../components/BookCard'
 import { Heart } from 'lucide-react'
 import '../assets/heartAnimation.css'
@@ -9,7 +9,8 @@ interface LikedArticlesContextType {
   isLiked: (pageid: number) => boolean
 }
 
-const LikedArticlesContext = createContext<LikedArticlesContextType | undefined>(undefined)
+// Export the context so it can be imported by the hook
+export const LikedArticlesContext = createContext<LikedArticlesContextType | undefined>(undefined)
 
 export function LikedArticlesProvider({ children }: { children: ReactNode }) {
   const [likedArticles, setLikedArticles] = useState<WikiArticle[]>(() => {
@@ -50,12 +51,4 @@ export function LikedArticlesProvider({ children }: { children: ReactNode }) {
       )}
     </LikedArticlesContext.Provider>
   )
-}
-
-export function useLikedArticles() {
-  const context = useContext(LikedArticlesContext)
-  if (!context) {
-    throw new Error('useLikedArticles must be used within a LikedArticlesProvider')
-  }
-  return context
 }
