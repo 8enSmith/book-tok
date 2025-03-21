@@ -61,7 +61,7 @@ function App() {
     const dataStr = JSON.stringify(simplifiedArticles, null, 2)
     const dataUri = 'data:application/json;charset=utf-8,' + encodeURIComponent(dataStr)
 
-    const exportFileDefaultName = `wikitok-favorites-${new Date().toISOString().split('T')[0]}.json`
+    const exportFileDefaultName = `book-tok-favorites-${new Date().toISOString().split('T')[0]}.json`
 
     const linkElement = document.createElement('a')
     linkElement.setAttribute('href', dataUri)

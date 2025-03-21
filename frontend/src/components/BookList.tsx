@@ -1,6 +1,13 @@
 import { FC, KeyboardEvent } from 'react'
 import Book from './Book'
-import { ArticleProps as BookProps } from '../types/ArticleProps'
+
+export interface BookProps {
+  id?: string | number
+  title: string
+  content: string
+  image?: string
+}
+
 interface BookListProps {
   books: BookProps[]
   onArticleSelect?: (article: BookProps) => void
