@@ -352,9 +352,10 @@ function App() {
       )}
 
       {books.length === 0 && loading ? (
-        <div className="h-screen w-full flex items-center justify-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading books...</span>
+        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+          <div className="flex flex-col items-center gap-2">
+            <Loader2 className="h-10 w-10 animate-spin text-white" />
+          </div>
         </div>
       ) : (
         books.map(book => {
@@ -406,7 +407,6 @@ function App() {
       {loading && books.length > 0 && (
         <div className="h-20 w-full flex items-center justify-center gap-2">
           <Loader2 className="h-6 w-6 animate-spin" />
-          <span>Loading more...</span>
         </div>
       )}
       <Analytics />

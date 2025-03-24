@@ -180,10 +180,7 @@ export const BookCard: React.FC<BookCardProps> = memo(
               {!imageLoaded && (
                 <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
                   <div className="flex flex-col items-center gap-2">
-                    <Loader2 className="h-10 w-10 animate-spin text-white opacity-70" />
-                    <span className="text-white opacity-70 text-sm font-medium">
-                      Loading book cover...
-                    </span>
+                    <Loader2 className="h-10 w-10 animate-spin text-white" />
                   </div>
                 </div>
               )}
