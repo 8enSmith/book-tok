@@ -10,6 +10,7 @@ export interface Book {
   coverUrl: string
   description?: string
   olid?: string
+  covers: string[] // Array of all edition IDs for the book
 }
 
 const preloadImage = (src: string): Promise<void> => {
@@ -37,6 +38,32 @@ const fetchBookDescription = async (workKey: string): Promise<string | undefined
   } catch (error) {
     console.error(`Error fetching description for ${workKey}:`, error)
     return undefined
+  }
+}
+
+// Define interface for edition entries
+interface EditionEntry {
+  covers?: number[];
+  // Other properties can be added as needed
+}
+
+// Function to fetch all cover IDs for a work
+const fetchCoverIds = async (workKey: string): Promise<number[]> => {
+  try {
+    // The workKey is in the format "/works/OL1234W", we need to extract "OL1234W"
+    const workId = workKey.split('/')[2]
+    const response = await fetch(`https://openlibrary.org/works/${workId}/editions.json`)
+    const data = await response.json()
+    
+    // Extract cover IDs from all editions
+    const coverIds = data.entries
+      .flatMap((entry: EditionEntry) => entry.covers || [])
+      .filter((id: number) => id) // Filter out any undefined/null/0 values
+    
+    return coverIds
+  } catch (error) {
+    console.error(`Error fetching cover IDs for ${workKey}:`, error)
+    return []
   }
 }
 
@@ -94,6 +121,7 @@ export function useBookCovers() {
             coverUrl,
             description: undefined, // Will be populated later
             olid: book.edition_key ? book.edition_key[0] : undefined,
+            covers: [], // Will be populated later with edition IDs
           }
         })
 
@@ -116,21 +144,30 @@ export function useBookCovers() {
       // Fetch descriptions in the background
       const enhanceWithDescriptions = async () => {
         try {
-          // Create an array of promises for fetching descriptions in parallel
+          // Create arrays of promises for fetching descriptions and cover IDs in parallel
           const descriptionPromises = booksWithoutDescriptions.map(book =>
             fetchBookDescription(book.key),
           )
+          const coverIdsPromises = booksWithoutDescriptions.map(book =>
+            fetchCoverIds(book.key),
+          )
 
-          // Fetch all descriptions in parallel
-          const descriptions = await Promise.all(descriptionPromises)
+          // Fetch all data in parallel
+          const [descriptions, allCoverIds] = await Promise.all([
+            Promise.all(descriptionPromises),
+            Promise.all(coverIdsPromises),
+          ])
 
-          // Assign descriptions to the corresponding books
+          // Assign descriptions and cover IDs to the corresponding books
           const enhancedBooks = booksWithoutDescriptions.map((book, index) => ({
             ...book,
             description: descriptions[index],
+            covers: allCoverIds[index].map(id => id.toString()),
           }))
 
-          // Update books with descriptions
+          console.log('Enhanced books:', enhancedBooks)
+
+          // Update books with descriptions and cover IDs
           if (forBuffer) {
             setBuffer(enhancedBooks)
           } else {
@@ -145,7 +182,7 @@ export function useBookCovers() {
           // Preload remaining images in the background
           Promise.allSettled(enhancedBooks.slice(1).map(book => preloadImage(book.coverUrl)))
         } catch (error) {
-          console.error('Error enhancing books with descriptions:', error)
+          console.error('Error enhancing books with additional data:', error)
         }
       }
 

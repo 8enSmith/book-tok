@@ -1,5 +1,5 @@
-import { Share2, Heart } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import React, { useEffect, useRef, useState, memo } from 'react';
+import { Share2, Heart, Loader2 } from 'lucide-react'
 import { useLikedArticles } from '../hooks/useLikedArticles'
 import { extractColorsFromImage } from '../utils/colorExtractor'
 
@@ -18,17 +18,48 @@ export interface WikiArticle {
   }
 }
 
-interface WikiCardProps {
-  article: WikiArticle
+interface BookCardProps {
+  article: {
+    title: string
+    firstPublishYear: number
+    displaytitle: string
+    authors: string[]
+    extract: string
+    pageid: number
+    url: string
+    thumbnail: {
+      source: string
+      width: number
+      height: number
+    }
+  }
+  onVisible?: () => void
+  coverIndex: number
+  totalCovers: number[]
 }
 
-export function BookCard({ article }: WikiCardProps) {
+// Use memo to prevent unnecessary re-renders
+export const BookCard: React.FC<BookCardProps> = memo(({ 
+  article, 
+  onVisible,
+  coverIndex,
+  totalCovers
+}) => {
   const [imageLoaded, setImageLoaded] = useState(false)
   const [backgroundColors, setBackgroundColors] = useState<string[]>([
     'rgba(0,0,0,0.8)',
     'rgba(40,40,40,0.8)',
   ])
   const { toggleLike, isLiked } = useLikedArticles()
+  const cardRef = useRef<HTMLDivElement>(null)
+  const [imageError, setImageError] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string>(article.thumbnail.source);
+  const [fallbackToThumbnail, setFallbackToThumbnail] = useState(false);
+  
+  // Reset image error state when cover index changes
+  useEffect(() => {
+    setImageError(false);
+  }, [coverIndex]);
 
   // Extract colors when thumbnail is available
   useEffect(() => {
@@ -42,6 +73,29 @@ export function BookCard({ article }: WikiCardProps) {
         })
     }
   }, [article.thumbnail?.source])
+
+  useEffect(() => {
+    if (!cardRef.current || !onVisible) return;
+    
+    // Store a reference to the current DOM node
+    const currentElement = cardRef.current;
+    
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        if (entry.isIntersecting) {
+          onVisible();
+        }
+      },
+      { threshold: 0.7 } // Trigger when 70% of the card is visible
+    );
+    
+    observer.observe(currentElement);
+    
+    return () => {
+      observer.unobserve(currentElement);
+    };
+  }, [onVisible]);
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -78,8 +132,47 @@ export function BookCard({ article }: WikiCardProps) {
     return originalUrl;
   };
 
+  // Convert cover ID to a proper URL
+  const getCoverUrl = (coverId: number, size: string = 'L') => {
+    return `https://covers.openlibrary.org/b/id/${coverId}-${size}.jpg`;
+  };
+
+  // Determine which cover to display
+  let imageSource = article.thumbnail.source;
+  
+  if (!imageError && totalCovers.length > 0 && typeof totalCovers[coverIndex] === 'number') {
+    imageSource = getCoverUrl(totalCovers[coverIndex]);
+    console.log(`Using cover ID ${totalCovers[coverIndex]} at index ${coverIndex}`);
+  }
+
+  // Update image URL when cover index changes
+  useEffect(() => {
+    if (totalCovers.length > 0 && coverIndex >= 0 && coverIndex < totalCovers.length && !fallbackToThumbnail) {
+      const coverId = totalCovers[coverIndex];
+      if (coverId && typeof coverId === 'number') {
+        const newUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+        console.log(`Setting image URL to: ${newUrl} (index: ${coverIndex})`);
+        setImageUrl(newUrl);
+      }
+    } else {
+      setImageUrl(article.thumbnail.source);
+    }
+  }, [totalCovers, coverIndex, article.thumbnail.source, fallbackToThumbnail]);
+  
+  // Reset fallback when cover index changes
+  useEffect(() => {
+    setFallbackToThumbnail(false);
+  }, [coverIndex]);
+
+  const handleImageError = () => {
+    console.log(`Image failed to load: ${imageUrl}`);
+    setFallbackToThumbnail(true);
+    setImageUrl(article.thumbnail.source);
+  };
+
   return (
     <div
+      ref={cardRef}
       className="h-screen w-full flex items-center justify-center snap-start relative"
       onDoubleClick={() => toggleLike(article)}
     >
@@ -93,14 +186,14 @@ export function BookCard({ article }: WikiCardProps) {
               {/* Provide different source sizes */}
               <source
                 media="(max-width: 640px)"
-                srcSet={getResponsiveImageUrl(article.thumbnail.source, 'M')}
+                srcSet={getResponsiveImageUrl(imageSource, 'M')}
               />
               <source
                 media="(min-width: 641px)"
-                srcSet={getResponsiveImageUrl(article.thumbnail.source, 'L')}
+                srcSet={getResponsiveImageUrl(imageSource, 'L')}
               />
               <img
-                src={article.thumbnail.source}
+                src={imageError ? article.thumbnail.source : imageSource}
                 alt={article.displaytitle}
                 width={article.thumbnail.width}
                 height={article.thumbnail.height}
@@ -108,25 +201,36 @@ export function BookCard({ article }: WikiCardProps) {
                   imageLoaded ? 'opacity-100' : 'opacity-0'
                 }`}
                 srcSet={`
-                  ${getResponsiveImageUrl(article.thumbnail.source, 'S')} 300w,
-                  ${getResponsiveImageUrl(article.thumbnail.source, 'M')} 600w,
-                  ${article.thumbnail.source} 1200w
+                  ${getResponsiveImageUrl(imageSource, 'S')} 300w,
+                  ${getResponsiveImageUrl(imageSource, 'M')} 600w,
+                  ${imageSource} 1200w
                 `}
                 sizes="(max-width: 640px) 90vw, (max-width: 1024px) 75vw, 50vw"
                 loading="eager"
                 onLoad={() => setImageLoaded(true)}
-                onError={e => {
-                  console.error('Image failed to load:', e)
-                  setImageLoaded(true)
-                }}
+                onError={handleImageError}
                 crossOrigin="anonymous"
               />
             </picture>
-            {!imageLoaded && <div className="absolute inset-0 bg-gray-900 animate-pulse" />}
+            {!imageLoaded && (
+              <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+                <div className="flex flex-col items-center gap-2">
+                  <Loader2 className="h-10 w-10 animate-spin text-white opacity-70" />
+                  <span className="text-white opacity-70 text-sm font-medium">Loading book cover...</span>
+                </div>
+              </div>
+            )}
             <div className="absolute inset-0 bg-gradient-to-b from-black/10 to-black/60" />
           </div>
         ) : (
           <div className="absolute inset-0 bg-gray-900" />
+        )}
+
+        {/* Cover counter - only show when multiple covers exist */}
+        {totalCovers.length > 1 && (
+          <div className="absolute bottom-28 right-4 bg-black/50 text-white px-2 py-1 rounded text-xs">
+            {coverIndex + 1}/{totalCovers.length}
+          </div>
         )}
 
         {/* Content container */}
@@ -168,4 +272,7 @@ export function BookCard({ article }: WikiCardProps) {
       </div>
     </div>
   )
-}
+})
+
+// Add display name for debugging
+BookCard.displayName = 'BookCard';
