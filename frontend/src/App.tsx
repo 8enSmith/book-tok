@@ -16,7 +16,9 @@ function App() {
   const observerTarget = useRef(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [visibleBookId, setVisibleBookId] = useState<string | null>(null)
-  const [activeCovers, setActiveCovers] = useState<Record<string, { index: number, url: string }>>({})
+  const [activeCovers, setActiveCovers] = useState<Record<string, { index: number; url: string }>>(
+    {},
+  )
   const [forceUpdate, setForceUpdate] = useState(0)
 
   const handleObserver = useCallback(
@@ -44,7 +46,7 @@ function App() {
 
   useEffect(() => {
     fetchBooks()
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const filteredLikedArticles = likedArticles.filter(
@@ -74,72 +76,75 @@ function App() {
 
   // Track which book is currently visible in viewport
   // Handle book becoming visible in the viewport
-  const handleBookVisible = useCallback((bookKey: string) => {
-    setVisibleBookId(bookKey);
-    
-    // Initialize the active cover for this book if not already done
-    if (!activeCovers[bookKey]) {
-      const book = books.find(b => b.key === bookKey);
-      if (book?.covers && book.covers.length > 0) {
-        const coverId = book.covers[0];
-        const coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
-        setActiveCovers(prev => ({
-          ...prev,
-          [bookKey]: { index: 0, url: coverUrl }
-        }));
+  const handleBookVisible = useCallback(
+    (bookKey: string) => {
+      setVisibleBookId(bookKey)
+
+      // Initialize the active cover for this book if not already done
+      if (!activeCovers[bookKey]) {
+        const book = books.find(b => b.key === bookKey)
+        if (book?.covers && book.covers.length > 0) {
+          const coverId = book.covers[0]
+          const coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+          setActiveCovers(prev => ({
+            ...prev,
+            [bookKey]: { index: 0, url: coverUrl },
+          }))
+        }
       }
-    }
-  }, [books, activeCovers]);
+    },
+    [books, activeCovers],
+  )
 
   // Navigate to previous cover
   const handlePrevCover = useCallback(() => {
-    if (!visibleBookId) return;
-    
-    const book = books.find(b => b.key === visibleBookId);
-    if (!book?.covers || book.covers.length <= 1) return;
-    
-    const currentIndex = activeCovers[visibleBookId]?.index || 0;
-    const newIndex = (currentIndex - 1 + book.covers.length) % book.covers.length;
-    const newCoverId = book.covers[newIndex];
-    const newCoverUrl = `https://covers.openlibrary.org/b/id/${newCoverId}-L.jpg`;
-    
+    if (!visibleBookId) return
+
+    const book = books.find(b => b.key === visibleBookId)
+    if (!book?.covers || book.covers.length <= 1) return
+
+    const currentIndex = activeCovers[visibleBookId]?.index || 0
+    const newIndex = (currentIndex - 1 + book.covers.length) % book.covers.length
+    const newCoverId = book.covers[newIndex]
+    const newCoverUrl = `https://covers.openlibrary.org/b/id/${newCoverId}-L.jpg`
+
     setActiveCovers(prev => ({
       ...prev,
-      [visibleBookId]: { index: newIndex, url: newCoverUrl }
-    }));
-    
+      [visibleBookId]: { index: newIndex, url: newCoverUrl },
+    }))
+
     // Force a re-render
-    setForceUpdate(prev => prev + 1);
-  }, [visibleBookId, books, activeCovers]);
+    setForceUpdate(prev => prev + 1)
+  }, [visibleBookId, books, activeCovers])
 
   // Navigate to next cover
   const handleNextCover = useCallback(() => {
-    if (!visibleBookId) return;
-    
-    const book = books.find(b => b.key === visibleBookId);
-    if (!book?.covers || book.covers.length <= 1) return;
-    
-    const currentIndex = activeCovers[visibleBookId]?.index || 0;
-    const newIndex = (currentIndex + 1) % book.covers.length;
-    const newCoverId = book.covers[newIndex];
-    const newCoverUrl = `https://covers.openlibrary.org/b/id/${newCoverId}-L.jpg`;
-    
+    if (!visibleBookId) return
+
+    const book = books.find(b => b.key === visibleBookId)
+    if (!book?.covers || book.covers.length <= 1) return
+
+    const currentIndex = activeCovers[visibleBookId]?.index || 0
+    const newIndex = (currentIndex + 1) % book.covers.length
+    const newCoverId = book.covers[newIndex]
+    const newCoverUrl = `https://covers.openlibrary.org/b/id/${newCoverId}-L.jpg`
+
     setActiveCovers(prev => ({
       ...prev,
-      [visibleBookId]: { index: newIndex, url: newCoverUrl }
-    }));
-    
+      [visibleBookId]: { index: newIndex, url: newCoverUrl },
+    }))
+
     // Force a re-render
-    setForceUpdate(prev => prev + 1);
-  }, [visibleBookId, books, activeCovers]);
+    setForceUpdate(prev => prev + 1)
+  }, [visibleBookId, books, activeCovers])
 
   // Determine if navigation buttons should be visible
   const shouldShowNavButtons = useCallback(() => {
-    if (!visibleBookId) return false;
-    
-    const book = books.find(book => book.key === visibleBookId);
-    return book?.covers && book.covers.length > 1;
-  }, [visibleBookId, books]);
+    if (!visibleBookId) return false
+
+    const book = books.find(book => book.key === visibleBookId)
+    return book?.covers && book.covers.length > 1
+  }, [visibleBookId, books])
 
   return (
     <div className="h-screen w-full bg-black text-white overflow-y-scroll snap-y snap-mandatory hide-scroll">
@@ -353,26 +358,25 @@ function App() {
         </div>
       ) : (
         books.map(book => {
-          const bookKey = book.key || '';
-          const activeCover = activeCovers[bookKey];
-          const hasCoverIndex = activeCover?.index !== undefined;
-          
+          const bookKey = book.key || ''
+          const activeCover = activeCovers[bookKey]
+          const hasCoverIndex = activeCover?.index !== undefined
+
           // Choose the correct cover URL
-          let coverUrl = book.coverUrl || '/placeholder-cover.jpg';
-          let coverIndex = 0;
-          const totalCovers = book.covers?.length || 0;
-          
+          let coverUrl = book.coverUrl || '/placeholder-cover.jpg'
+          let coverIndex = 0
+
           // If we have a stored active cover for this book, use that
           if (hasCoverIndex && activeCover.url) {
-            coverUrl = activeCover.url;
-            coverIndex = activeCover.index;
-          } 
+            coverUrl = activeCover.url
+            coverIndex = activeCover.index
+          }
           // Otherwise, if it has covers, use the first one
           else if (book.covers && book.covers.length > 0) {
-            const coverId = book.covers[0];
-            coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`;
+            const coverId = book.covers[0]
+            coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
           }
-          
+
           return (
             <BookCard
               key={`${bookKey}-${forceUpdate}-${coverIndex}`}
@@ -387,14 +391,14 @@ function App() {
                 thumbnail: {
                   source: coverUrl,
                   width: 300,
-                  height: 450
+                  height: 450,
                 },
               }}
               onVisible={() => handleBookVisible(bookKey)}
               coverIndex={coverIndex}
-              totalCovers={totalCovers}
+              totalCovers={(book.covers as unknown as number[]) || []}
             />
-          );
+          )
         })
       )}
 
