@@ -9,7 +9,6 @@ export interface Book {
   coverId: number
   coverUrl: string
   description?: string
-  olid?: string
   covers: string[] // Array of all edition IDs for the book
 }
 
@@ -121,7 +120,6 @@ export function useBookCovers() {
               coverId,
               coverUrl,
               description: undefined, // Will be populated later
-              olid: book.edition_key ? book.edition_key[0] : undefined,
               covers: [], // Will be populated later with edition IDs
             }
           })
@@ -161,7 +159,7 @@ export function useBookCovers() {
             const enhancedBooks = booksWithoutDescriptions.map((book, index) => ({
               ...book,
               description: descriptions[index],
-              covers: allCoverIds[index].map(id => id.toString()),
+              covers: allCoverIds[index].filter(id => id > 0).map(id => id.toString()),
             }))
 
             console.log('Enhanced books:', enhancedBooks)
