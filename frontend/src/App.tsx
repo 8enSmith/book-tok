@@ -1,4 +1,4 @@
-import { useEffect, useRef, useCallback, useState } from 'react'
+import { useEffect, useRef, useCallback, useState, TouchEvent } from 'react'
 import { BookCard } from './components/BookCard'
 import { Loader2, Search, X, Download, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
@@ -20,6 +20,11 @@ function App() {
     {},
   )
   const [forceUpdate, setForceUpdate] = useState(0)
+  const [touchStart, setTouchStart] = useState<number | null>(null)
+  const [touchEnd, setTouchEnd] = useState<number | null>(null)
+
+  // The minimum swipe distance (in px) to trigger a navigation
+  const MIN_SWIPE_DISTANCE = 50
 
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
@@ -146,8 +151,47 @@ function App() {
     return book?.covers && book.covers.length > 1
   }, [visibleBookId, books])
 
+  // Handle touch start event
+  const handleTouchStart = useCallback((e: TouchEvent) => {
+    setTouchEnd(null) // Reset touchEnd
+    setTouchStart(e.targetTouches[0].clientX)
+  }, [])
+
+  // Handle touch move event
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX)
+  }, [])
+
+  // Handle touch end event
+  const handleTouchEnd = useCallback(() => {
+    if (!touchStart || !touchEnd) return
+
+    const distance = touchStart - touchEnd
+    const isSignificantSwipe = Math.abs(distance) > MIN_SWIPE_DISTANCE
+
+    if (!isSignificantSwipe || !shouldShowNavButtons()) return
+
+    // Swipe right to left (next cover)
+    if (distance > 0) {
+      handleNextCover()
+    }
+    // Swipe left to right (previous cover)
+    else {
+      handlePrevCover()
+    }
+
+    // Reset touch positions
+    setTouchStart(null)
+    setTouchEnd(null)
+  }, [touchStart, touchEnd, handleNextCover, handlePrevCover, shouldShowNavButtons])
+
   return (
-    <div className="h-screen w-full bg-black text-white overflow-y-scroll snap-y snap-mandatory hide-scroll">
+    <div
+      className="h-screen w-full bg-black text-white overflow-y-scroll snap-y snap-mandatory hide-scroll"
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       <div className="fixed top-4 left-4 z-50">
         <button
           onClick={() => window.location.reload()}
