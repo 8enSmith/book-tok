@@ -1,9 +1,8 @@
 {
-	"short_name": "Book-Tok",
-	"name": "Book-Tok",
-	"icons": [],
-	"start_url": ".",
-	"display": "standalone",
-	"theme_color": "#000000",
-	"background_color": "#ffffff"
+    "short_name": "Book-Tok",
+    "name": "Book-Tok",
+    "start_url": ".",
+    "display": "standalone",
+    "theme_color": "#000000",
+    "background_color": "#ffffff"
 }
