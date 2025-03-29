@@ -24,7 +24,9 @@ const LikedBooksModal: React.FC<LikedBooksModalProps> = ({
   handleExport,
 }) => {
   return (
-    <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 ${showLikes ? 'block' : 'hidden'}`}>
+    <div
+      className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 ${showLikes ? 'block' : 'hidden'}`}
+    >
       <div className="bg-gray-900 z-[41] p-6 rounded-lg w-full max-w-2xl h-[80vh] flex flex-col relative">
         <button
           onClick={() => setShowLikes(false)}

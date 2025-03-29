@@ -260,9 +260,7 @@ function App() {
       )}
 
       <Suspense fallback={null}>
-        {hasClickedAbout && (
-          <AboutModal showAbout={showAbout} setShowAbout={setShowAbout} />
-        )}
+        {hasClickedAbout && <AboutModal showAbout={showAbout} setShowAbout={setShowAbout} />}
       </Suspense>
 
       <Suspense fallback={null}>

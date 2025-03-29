@@ -228,7 +228,7 @@ export const BookCard: React.FC<BookCardProps> = memo(
                 Cover edition: {coverIndex + 1}/{totalCovers.length}
               </h3>
             )}
-            <p 
+            <p
               className={`text-gray-100 mb-4 drop-shadow-lg cursor-pointer ${isExtractExpanded ? 'line-clamp-6' : 'line-clamp-1'}`}
               onClick={toggleExtract}
             >

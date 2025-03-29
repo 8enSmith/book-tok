@@ -1,13 +1,15 @@
-import React from 'react';
+import React from 'react'
 
 interface AboutModalProps {
-  showAbout: boolean;
-  setShowAbout: (show: boolean) => void;
+  showAbout: boolean
+  setShowAbout: (show: boolean) => void
 }
 
 const AboutModal: React.FC<AboutModalProps> = ({ showAbout, setShowAbout }) => {
   return (
-    <div className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 ${showAbout ? 'block' : 'hidden'}`}>
+    <div
+      className={`fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 ${showAbout ? 'block' : 'hidden'}`}
+    >
       <div className="bg-gray-900 z-[41] p-6 rounded-lg max-w-md relative">
         <button
           onClick={() => setShowAbout(false)}
@@ -72,7 +74,7 @@ const AboutModal: React.FC<AboutModalProps> = ({ showAbout, setShowAbout }) => {
         onClick={() => setShowAbout(false)}
       ></div>
     </div>
-  );
-};
+  )
+}
 
-export default AboutModal;
+export default AboutModal
