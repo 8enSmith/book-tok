@@ -50,6 +50,12 @@ export const BookCard: React.FC<BookCardProps> = memo(
     const cardRef = useRef<HTMLDivElement>(null)
     const [imageError, setImageError] = useState(false)
     const [imageUrl, setImageUrl] = useState<string>(article.thumbnail.source)
+    const [isExtractExpanded, setIsExtractExpanded] = useState(false)
+
+    // Toggle extract expansion when clicked
+    const toggleExtract = () => {
+      setIsExtractExpanded(!isExtractExpanded)
+    }
 
     // Reset image error state when cover index changes
     useEffect(() => {
@@ -222,7 +228,13 @@ export const BookCard: React.FC<BookCardProps> = memo(
                 Cover edition: {coverIndex + 1}/{totalCovers.length}
               </h3>
             )}
-            <p className="text-gray-100 mb-4 drop-shadow-lg line-clamp-6">{article.extract}</p>
+            <p 
+              className={`text-gray-100 mb-4 drop-shadow-lg cursor-pointer ${isExtractExpanded ? 'line-clamp-6' : 'line-clamp-1'}`}
+              onClick={toggleExtract}
+            >
+              {article.extract}
+              {!isExtractExpanded && '...'}
+            </p>
             <a
               href={article.url}
               target="_blank"
