@@ -430,7 +430,7 @@ function App() {
                 authors: book.authors || ['Unknown Author'],
                 title: book.title || '',
                 displaytitle: book.title || '',
-                extract: book.description || 'Loading description...',
+                extract: book.description || 'Loading description',
                 firstPublishYear: book.firstPublishYear || 0,
                 url: book.key ? `https://openlibrary.org${book.key}` : '',
                 thumbnail: {
