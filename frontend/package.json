@@ -10,7 +10,6 @@
     "lint": "eslint .",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,css,json,md}\"",
-    "prepare": "cd .. && husky",
     "pre-commit": "lint-staged"
   },
   "lint-staged": {
