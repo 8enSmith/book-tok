@@ -8,7 +8,7 @@ This project is based on the excellent [WikiTok](https://github.com/IsaacGemal/w
 
 ## Features
 
-- Vertical scrolling feed of random Wikipedia articles
+- Vertical scrolling feed of random Open Library books
 - Book previews with cover image, title, authors and first year of publication
 - Share books directly or copy links
 - Preloading of images and content for smooth scrolling
