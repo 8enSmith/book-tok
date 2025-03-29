@@ -3,6 +3,6 @@
     "bun run lint"
   ],
   "src/**/*.{ts,tsx,js,jsx,css,json,md}": [
-    "bun run format:check"
+    "bun run format"
   ]
 }
