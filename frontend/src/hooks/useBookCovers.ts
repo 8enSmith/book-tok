@@ -1,6 +1,19 @@
 import { useState, useCallback } from 'react'
 
-// Define new Book type to replace WikiArticle
+// Define interfaces for the Open Library API response
+interface OpenLibraryDoc {
+  title: string
+  first_publish_year: number
+  author_name?: string[]
+  key: string
+  cover_i: number
+  edition_key?: string[]
+}
+
+interface OpenLibrarySearchResponse {
+  docs: OpenLibraryDoc[]
+}
+
 export interface Book {
   title: string
   firstPublishYear: number
@@ -90,21 +103,6 @@ export function useBookCovers() {
 
         const data = await response.json()
 
-        // Process the book data
-        // Define interfaces for the Open Library API response
-        interface OpenLibraryDoc {
-          title: string
-          first_publish_year: number
-          author_name?: string[]
-          key: string
-          cover_i: number
-          edition_key?: string[]
-        }
-
-        interface OpenLibrarySearchResponse {
-          docs: OpenLibraryDoc[]
-        }
-
         const booksWithoutDescriptions: Book[] = (data as OpenLibrarySearchResponse).docs
           .filter((book: OpenLibraryDoc) => book.cover_i) // Ensure books have covers
           .map((book: OpenLibraryDoc): Book => {
@@ -156,11 +154,30 @@ export function useBookCovers() {
             ])
 
             // Assign descriptions and cover IDs to the corresponding books
-            const enhancedBooks = booksWithoutDescriptions.map((book, index) => ({
-              ...book,
-              description: descriptions[index],
-              covers: allCoverIds[index].filter(id => id > 0).map(id => id.toString()),
-            }))
+            const enhancedBooks = booksWithoutDescriptions.map((book, index) => {
+              // Get the cover IDs but ensure the original cover ID is included first
+              let editionCovers = allCoverIds[index].filter(id => id > 0).map(id => id.toString())
+
+              // Convert the original coverId to string for consistency
+              const originalCoverId = book.coverId.toString()
+
+              // If the original cover ID isn't in the list, add it as the first item
+              if (!editionCovers.includes(originalCoverId)) {
+                editionCovers = [originalCoverId, ...editionCovers]
+              } else {
+                // If it is in the list but not first, move it to the first position
+                editionCovers = [
+                  originalCoverId,
+                  ...editionCovers.filter(id => id !== originalCoverId),
+                ]
+              }
+
+              return {
+                ...book,
+                description: descriptions[index],
+                covers: editionCovers,
+              }
+            })
 
             console.log('Enhanced books:', enhancedBooks)
 

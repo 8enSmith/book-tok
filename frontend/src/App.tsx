@@ -13,6 +13,8 @@ injectSpeedInsights()
 const LikedBooksModal = lazy(() => import('./components/LikedBooksModal'))
 const AboutModal = lazy(() => import('./components/AboutModal'))
 
+const getCoverUrl = (coverId: string) => `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+
 function App() {
   const [showAbout, setShowAbout] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
@@ -96,9 +98,15 @@ function App() {
       // Initialize the active cover for this book if not already done
       if (!activeCovers[bookKey]) {
         const book = books.find(b => b.key === bookKey)
-        if (book?.covers && book.covers.length > 0) {
-          const coverId = book.covers[0]
-          const coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+        // For the first visible book, use its original cover
+        if (book) {
+          // Always preserve the original cover URL for the book
+          const coverUrl =
+            book.coverUrl ||
+            (book.covers && book.covers.length > 0
+              ? `https://covers.openlibrary.org/b/id/${book.covers[0]}-L.jpg`
+              : '/placeholder-cover.jpg')
+
           setActiveCovers(prev => ({
             ...prev,
             [bookKey]: { index: 0, url: coverUrl },
@@ -119,7 +127,7 @@ function App() {
     const currentIndex = activeCovers[visibleBookId]?.index || 0
     const newIndex = (currentIndex - 1 + book.covers.length) % book.covers.length
     const newCoverId = book.covers[newIndex]
-    const newCoverUrl = `https://covers.openlibrary.org/b/id/${newCoverId}-L.jpg`
+    const newCoverUrl = getCoverUrl(newCoverId)
 
     setActiveCovers(prev => ({
       ...prev,
@@ -299,10 +307,23 @@ function App() {
             coverUrl = activeCover.url
             coverIndex = activeCover.index
           }
-          // Otherwise, if it has covers, use the first one
+          // If this is the first book and it has no active cover yet but has editions,
+          // preserve the initial cover instead of immediately switching
           else if (book.covers && book.covers.length > 0) {
-            const coverId = book.covers[0]
-            coverUrl = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+            // Only update activeCovers if it hasn't been set yet AND
+            // if this isn't the first visible book (or user has already interacted with covers)
+            if (!activeCovers[bookKey] && visibleBookId !== bookKey) {
+              const coverId = book.covers[0]
+              coverUrl = getCoverUrl(coverId.toString())
+            }
+            // Use the original cover if this is the first visible book
+            else if (!activeCovers[bookKey]) {
+              // We'll initialize activeCovers with the original cover to prevent future updates
+              setActiveCovers(prev => ({
+                ...prev,
+                [bookKey]: { index: 0, url: book.coverUrl },
+              }))
+            }
           }
 
           return (
