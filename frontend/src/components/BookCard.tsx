@@ -60,18 +60,34 @@ export const BookCard: React.FC<BookCardProps> = memo(
     // Reset image error state when cover index changes
     useEffect(() => {
       setImageError(false)
+      setImageLoaded(false)
     }, [coverIndex])
 
-    // Extract colors when thumbnail is available
+    // Preload image and extract colors at the same time
     useEffect(() => {
       if (article.thumbnail?.source) {
-        extractColorsFromImage(article.thumbnail.source)
-          .then(colors => {
-            setBackgroundColors(colors)
-          })
-          .catch(error => {
-            console.error('Failed to extract colors:', error)
-          })
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.src = article.thumbnail.source
+
+        img.onload = () => {
+          // Both extract colors and set image loaded state
+          extractColorsFromImage(article.thumbnail.source)
+            .then(colors => {
+              setBackgroundColors(colors)
+              setImageLoaded(true)
+            })
+            .catch(error => {
+              console.error('Failed to extract colors:', error)
+              setImageLoaded(true)
+            })
+        }
+
+        img.onerror = () => {
+          console.error('Failed to load image')
+          setImageError(true)
+          setImageLoaded(true)
+        }
       }
     }, [article.thumbnail?.source])
 
