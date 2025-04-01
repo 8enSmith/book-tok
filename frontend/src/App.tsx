@@ -6,6 +6,7 @@ import { injectSpeedInsights } from '@vercel/speed-insights'
 import { useLikedArticles } from './hooks/useLikedArticles'
 import { useBookCovers } from './hooks/useBookCovers'
 import { BackgroundColorContext } from './contexts/BackgroundColorContext'
+import { BOOK_SUBJECTS } from './data/bookSubjects'
 import {
   Select,
   SelectContent,
@@ -22,20 +23,6 @@ const LikedBooksModal = lazy(() => import('./components/LikedBooksModal'))
 const AboutModal = lazy(() => import('./components/AboutModal'))
 
 const getCoverUrl = (coverId: string) => `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
-
-// Popular book subjects for selection
-const BOOK_SUBJECTS = [
-  { value: 'fiction', label: 'Fiction' },
-  { value: 'fantasy', label: 'Fantasy' },
-  { value: 'science_fiction', label: 'Science Fiction' },
-  { value: 'romance', label: 'Romance' },
-  { value: 'mystery', label: 'Mystery' },
-  { value: 'thriller', label: 'Thriller' },
-  { value: 'history', label: 'History' },
-  { value: 'biography', label: 'Biography' },
-  { value: 'science', label: 'Science' },
-  { value: 'philosophy', label: 'Philosophy' },
-]
 
 function App() {
   const [showAbout, setShowAbout] = useState(false)
