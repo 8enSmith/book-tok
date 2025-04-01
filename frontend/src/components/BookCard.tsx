@@ -33,7 +33,7 @@ interface BookCardProps {
       height: number
     }
   }
-  onVisible?: () => void
+  onVisible?: (backgroundColors?: string[]) => void
   coverIndex: number
   totalCovers: number[]
 }
@@ -101,7 +101,8 @@ export const BookCard: React.FC<BookCardProps> = memo(
         entries => {
           const [entry] = entries
           if (entry.isIntersecting) {
-            onVisible()
+            // Pass background colors to parent component when book becomes visible
+            onVisible(backgroundColors)
           }
         },
         { threshold: 0.7 }, // Trigger when 70% of the card is visible
@@ -112,7 +113,7 @@ export const BookCard: React.FC<BookCardProps> = memo(
       return () => {
         observer.unobserve(currentElement)
       }
-    }, [onVisible])
+    }, [onVisible, backgroundColors])
 
     const handleShare = async () => {
       if (navigator.share) {
