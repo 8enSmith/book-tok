@@ -5,6 +5,15 @@ import { Analytics } from '@vercel/analytics/react'
 import { injectSpeedInsights } from '@vercel/speed-insights'
 import { useLikedArticles } from './hooks/useLikedArticles'
 import { useBookCovers } from './hooks/useBookCovers'
+import { BackgroundColorContext } from './contexts/BackgroundColorContext'
+import { BOOK_SUBJECTS } from './data/bookSubjects'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from './components/ui/select'
 
 injectSpeedInsights()
 
@@ -21,6 +30,7 @@ function App() {
   // Track if the user has clicked the buttons at least once
   const [hasClickedLikes, setHasClickedLikes] = useState(false)
   const [hasClickedAbout, setHasClickedAbout] = useState(false)
+  const [selectedSubject, setSelectedSubject] = useState('science_fiction')
   const { books, loading, fetchBooks } = useBookCovers()
   const { likedArticles, toggleLike } = useLikedArticles()
   const observerTarget = useRef(null)
@@ -32,6 +42,11 @@ function App() {
   const [forceUpdate, setForceUpdate] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
+  // Add state to track the current book's background colors
+  const [currentBackgroundColors, setCurrentBackgroundColors] = useState<string[]>([
+    'rgba(0,0,0,0.8)',
+    'rgba(40,40,40,0.8)',
+  ])
 
   // The minimum swipe distance (in px) to trigger a navigation
   const MIN_SWIPE_DISTANCE = 50
@@ -40,10 +55,10 @@ function App() {
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries
       if (target.isIntersecting && !loading) {
-        fetchBooks()
+        fetchBooks(selectedSubject !== 'all' ? selectedSubject : undefined)
       }
     },
-    [loading, fetchBooks],
+    [loading, fetchBooks, selectedSubject],
   )
 
   useEffect(() => {
@@ -59,10 +74,12 @@ function App() {
     return () => observer.disconnect()
   }, [handleObserver])
 
+  // Reset books and page counter when subject changes
   useEffect(() => {
-    fetchBooks()
+    // Clear existing books and reset page counter in the hook
+    fetchBooks(selectedSubject !== 'all' ? selectedSubject : undefined, true)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [selectedSubject])
 
   const filteredLikedArticles = likedArticles.filter(
     article =>
@@ -92,8 +109,13 @@ function App() {
   // Track which book is currently visible in viewport
   // Handle book becoming visible in the viewport
   const handleBookVisible = useCallback(
-    (bookKey: string) => {
+    (bookKey: string, backgroundColors?: string[]) => {
       setVisibleBookId(bookKey)
+
+      // Update background colors if provided
+      if (backgroundColors) {
+        setCurrentBackgroundColors(backgroundColors)
+      }
 
       // Initialize the active cover for this book if not already done
       if (!activeCovers[bookKey]) {
@@ -202,163 +224,188 @@ function App() {
   }, [touchStart, touchEnd, handleNextCover, handlePrevCover, shouldShowNavButtons])
 
   return (
-    <div
-      className="h-screen w-full bg-black text-white overflow-y-scroll snap-y snap-mandatory hide-scroll"
-      onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
-    >
-      <div className="fixed top-4 left-4 z-50">
-        <button
-          onClick={() => window.location.reload()}
-          className="text-2xl font-bold text-white drop-shadow-lg hover:opacity-80 transition-opacity"
-        >
-          Book-Tok
-        </button>
-      </div>
+    <BackgroundColorContext.Provider value={currentBackgroundColors}>
+      <div
+        className="h-screen w-full bg-black text-white overflow-y-scroll snap-y snap-mandatory hide-scroll"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <div className="fixed top-4 left-4 z-50">
+          <button
+            onClick={() => window.location.reload()}
+            className="text-2xl font-bold text-white drop-shadow-lg hover:opacity-80 transition-opacity"
+          >
+            Book-Tok
+          </button>
+        </div>
 
-      <div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
-        <button
-          onClick={() => {
-            // When the About button is clicked, mark that we've clicked it
-            if (!hasClickedAbout) {
-              setHasClickedAbout(true)
-            }
-            setShowAbout(!showAbout)
-          }}
-          className="text-sm text-white/70 hover:text-white transition-colors"
-        >
-          About
-        </button>
-        <button
-          onClick={() => {
-            // When the likes button is clicked, mark that we've clicked it
-            // This will trigger the conditional rendering of the LikedBooksModal
-            if (!hasClickedLikes) {
-              setHasClickedLikes(true)
-            }
-            setShowLikes(!showLikes)
-          }}
-          className="text-sm text-white/70 hover:text-white transition-colors"
-        >
-          Likes
-        </button>
-      </div>
+        <div className="fixed top-4 right-4 z-50 flex flex-col items-end gap-2">
+          <button
+            onClick={() => {
+              // When the About button is clicked, mark that we've clicked it
+              if (!hasClickedAbout) {
+                setHasClickedAbout(true)
+              }
+              setShowAbout(!showAbout)
+            }}
+            className="text-sm text-white/70 hover:text-white transition-colors"
+          >
+            About
+          </button>
+          <button
+            onClick={() => {
+              // When the likes button is clicked, mark that we've clicked it
+              // This will trigger the conditional rendering of the LikedBooksModal
+              if (!hasClickedLikes) {
+                setHasClickedLikes(true)
+              }
+              setShowLikes(!showLikes)
+            }}
+            className="text-sm text-white/70 hover:text-white transition-colors"
+          >
+            Likes
+          </button>
 
-      {/* Left navigation button - only show when multiple covers available */}
-      {shouldShowNavButtons() && (
-        <button
-          className="fixed left-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors opacity-70 hover:opacity-100"
-          aria-label="Previous cover"
-          onClick={handlePrevCover}
-        >
-          <ChevronLeft className="w-6 h-6" />
-        </button>
-      )}
-
-      {/* Right navigation button - only show when multiple covers available */}
-      {shouldShowNavButtons() && (
-        <button
-          className="fixed right-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors opacity-70 hover:opacity-100"
-          aria-label="Next cover"
-          onClick={handleNextCover}
-        >
-          <ChevronRight className="w-6 h-6" />
-        </button>
-      )}
-
-      <Suspense fallback={null}>
-        {hasClickedAbout && <AboutModal showAbout={showAbout} setShowAbout={setShowAbout} />}
-      </Suspense>
-
-      <Suspense fallback={null}>
-        {hasClickedLikes && (
-          <LikedBooksModal
-            showLikes={showLikes}
-            setShowLikes={setShowLikes}
-            likedArticles={likedArticles}
-            toggleLike={toggleLike}
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            filteredLikedArticles={filteredLikedArticles}
-            handleExport={handleExport}
-          />
-        )}
-      </Suspense>
-
-      {books.length === 0 && loading ? (
-        <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
-          <div className="flex flex-col items-center gap-2">
-            <Loader2 className="h-10 w-10 animate-spin text-white" />
+          {/* Subject Selector styled as a link */}
+          <div className="w-auto">
+            <Select
+              value={selectedSubject}
+              onValueChange={value => {
+                // When subject changes, update the selected subject state
+                setSelectedSubject(value)
+                // The useEffect hook will handle clearing books and resetting page
+              }}
+            >
+              <SelectTrigger className="w-auto h-auto min-w-0 border-0 bg-transparent p-0 text-sm text-white/70 hover:text-white transition-colors shadow-none focus:ring-0 focus:ring-offset-0 focus:border-0">
+                <SelectValue placeholder="Select subject" />
+              </SelectTrigger>
+              <SelectContent>
+                {BOOK_SUBJECTS.map(subject => (
+                  <SelectItem key={subject.value} value={subject.value}>
+                    {subject.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
-      ) : (
-        books.map(book => {
-          const bookKey = book.key || ''
-          const activeCover = activeCovers[bookKey]
-          const hasCoverIndex = activeCover?.index !== undefined
 
-          // Choose the correct cover URL
-          let coverUrl = book.coverUrl || '/placeholder-cover.jpg'
-          let coverIndex = 0
+        {/* Left navigation button - only show when multiple covers available */}
+        {shouldShowNavButtons() && (
+          <button
+            className="fixed left-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors opacity-70 hover:opacity-100"
+            aria-label="Previous cover"
+            onClick={handlePrevCover}
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
+        )}
 
-          // If we have a stored active cover for this book, use that
-          if (hasCoverIndex && activeCover.url) {
-            coverUrl = activeCover.url
-            coverIndex = activeCover.index
-          }
-          // If this is the first book and it has no active cover yet but has editions,
-          // preserve the initial cover instead of immediately switching
-          else if (book.covers && book.covers.length > 0) {
-            // Only update activeCovers if it hasn't been set yet AND
-            // if this isn't the first visible book (or user has already interacted with covers)
-            if (!activeCovers[bookKey] && visibleBookId !== bookKey) {
-              const coverId = book.covers[0]
-              coverUrl = getCoverUrl(coverId.toString())
-            }
-            // Use the original cover if this is the first visible book
-            else if (!activeCovers[bookKey]) {
-              // We'll initialize activeCovers with the original cover to prevent future updates
-              setActiveCovers(prev => ({
-                ...prev,
-                [bookKey]: { index: 0, url: book.coverUrl },
-              }))
-            }
-          }
+        {/* Right navigation button - only show when multiple covers available */}
+        {shouldShowNavButtons() && (
+          <button
+            className="fixed right-4 top-1/2 -translate-y-1/2 z-40 p-3 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-colors opacity-70 hover:opacity-100"
+            aria-label="Next cover"
+            onClick={handleNextCover}
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
+        )}
 
-          return (
-            <BookCard
-              key={`${bookKey}-${forceUpdate}-${coverIndex}`}
-              article={{
-                pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
-                authors: book.authors || ['Unknown Author'],
-                title: book.title || '',
-                displaytitle: book.title || '',
-                extract: book.description || 'Loading description',
-                firstPublishYear: book.firstPublishYear || 0,
-                url: book.key ? `https://openlibrary.org${book.key}` : '',
-                thumbnail: {
-                  source: coverUrl,
-                  width: 300,
-                  height: 450,
-                },
-              }}
-              onVisible={() => handleBookVisible(bookKey)}
-              coverIndex={coverIndex}
-              totalCovers={(book.covers as unknown as number[]) || []}
+        <Suspense fallback={null}>
+          {hasClickedAbout && <AboutModal showAbout={showAbout} setShowAbout={setShowAbout} />}
+        </Suspense>
+
+        <Suspense fallback={null}>
+          {hasClickedLikes && (
+            <LikedBooksModal
+              showLikes={showLikes}
+              setShowLikes={setShowLikes}
+              likedArticles={likedArticles}
+              toggleLike={toggleLike}
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              filteredLikedArticles={filteredLikedArticles}
+              handleExport={handleExport}
             />
-          )
-        })
-      )}
+          )}
+        </Suspense>
 
-      <div ref={observerTarget} className="h-10 -mt-1" />
-      {loading && books.length > 0 && (
-        <div className="h-20 w-full flex items-center justify-center gap-2">
-          <Loader2 className="h-6 w-6 animate-spin" />
-        </div>
-      )}
-      <Analytics />
-    </div>
+        {books.length === 0 && loading ? (
+          <div className="absolute inset-0 bg-gray-900 flex items-center justify-center">
+            <div className="flex flex-col items-center gap-2">
+              <Loader2 className="h-10 w-10 animate-spin text-white" />
+            </div>
+          </div>
+        ) : (
+          books.map(book => {
+            const bookKey = book.key || ''
+            const activeCover = activeCovers[bookKey]
+            const hasCoverIndex = activeCover?.index !== undefined
+
+            // Choose the correct cover URL
+            let coverUrl = book.coverUrl || '/placeholder-cover.jpg'
+            let coverIndex = 0
+
+            // If we have a stored active cover for this book, use that
+            if (hasCoverIndex && activeCover.url) {
+              coverUrl = activeCover.url
+              coverIndex = activeCover.index
+            }
+            // If this is the first book and it has no active cover yet but has editions,
+            // preserve the initial cover instead of immediately switching
+            else if (book.covers && book.covers.length > 0) {
+              // Only update activeCovers if it hasn't been set yet AND
+              // if this isn't the first visible book (or user has already interacted with covers)
+              if (!activeCovers[bookKey] && visibleBookId !== bookKey) {
+                const coverId = book.covers[0]
+                coverUrl = getCoverUrl(coverId.toString())
+              }
+              // Use the original cover if this is the first visible book
+              else if (!activeCovers[bookKey]) {
+                // We'll initialize activeCovers with the original cover to prevent future updates
+                setActiveCovers(prev => ({
+                  ...prev,
+                  [bookKey]: { index: 0, url: book.coverUrl || '/placeholder-cover.jpg' },
+                }))
+              }
+            }
+
+            return (
+              <BookCard
+                key={`${bookKey}-${forceUpdate}-${coverIndex}`}
+                article={{
+                  pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
+                  authors: book.authors || ['Unknown Author'],
+                  title: book.title || '',
+                  displaytitle: book.title || '',
+                  extract: book.description || 'Loading description',
+                  firstPublishYear: book.firstPublishYear || 0,
+                  url: book.key ? `https://openlibrary.org${book.key}` : '',
+                  thumbnail: {
+                    source: coverUrl,
+                    width: 300,
+                    height: 450,
+                  },
+                }}
+                onVisible={backgroundColors => handleBookVisible(bookKey, backgroundColors)}
+                coverIndex={coverIndex}
+                totalCovers={(book.covers as unknown as number[]) || []}
+              />
+            )
+          })
+        )}
+
+        <div ref={observerTarget} className="h-10 -mt-1" />
+        {loading && books.length > 0 && (
+          <div className="h-20 w-full flex items-center justify-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+          </div>
+        )}
+        <Analytics />
+      </div>
+    </BackgroundColorContext.Provider>
   )
 }
 

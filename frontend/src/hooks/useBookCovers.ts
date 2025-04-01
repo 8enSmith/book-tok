@@ -1,229 +1,172 @@
 import { useState, useCallback } from 'react'
+import { BOOK_SUBJECTS } from '../data/bookSubjects'
 
-// Define interfaces for the Open Library API response
-interface OpenLibraryDoc {
-  title: string
-  first_publish_year: number
-  author_name?: string[]
-  key: string
-  cover_i: number
-  edition_key?: string[]
-}
-
-interface OpenLibrarySearchResponse {
-  docs: OpenLibraryDoc[]
-}
-
-export interface Book {
-  title: string
-  firstPublishYear: number
-  authors: string[] // Array of authors instead of single author
-  key: string
-  coverId: number
-  coverUrl: string
+// Define the book type
+export type Book = {
+  key?: string
+  title?: string
+  covers?: string[]
+  authors?: string[]
   description?: string
-  covers: string[] // Array of all edition IDs for the book
+  coverUrl?: string
+  firstPublishYear?: number
 }
 
-const preloadImage = (src: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.src = src
-    img.onload = () => resolve()
-    img.onerror = reject
-  })
+// Define the OpenLibrary API book response type
+interface OpenLibraryBook {
+  key: string
+  title: string
+  cover_i?: number
+  author_name?: string[]
+  first_publish_year?: number
 }
 
-// Function to fetch book description from Works API
-const fetchBookDescription = async (workKey: string): Promise<string | undefined> => {
-  try {
-    const response = await fetch(`https://openlibrary.org${workKey}.json`)
-    const data = await response.json()
-
-    // Try to get description from different possible formats
-    if (typeof data.description === 'string') {
-      return data.description
-    } else if (data.description && data.description.value) {
-      return data.description.value
-    }
-    return undefined
-  } catch (error) {
-    console.error(`Error fetching description for ${workKey}:`, error)
-    return undefined
-  }
-}
-
-// Define interface for edition entries
-interface EditionEntry {
-  covers?: number[]
-  // Other properties can be added as needed
-}
-
-// Function to fetch all cover IDs for a work
-const fetchCoverIds = async (workKey: string): Promise<number[]> => {
-  try {
-    // The workKey is in the format "/works/OL1234W", we need to extract "OL1234W"
-    const workId = workKey.split('/')[2]
-    const response = await fetch(`https://openlibrary.org/works/${workId}/editions.json`)
-    const data = await response.json()
-
-    // Extract cover IDs from all editions
-    const coverIds = data.entries
-      .flatMap((entry: EditionEntry) => entry.covers || [])
-      .filter((id: number) => id) // Filter out any undefined/null/0 values
-
-    return coverIds
-  } catch (error) {
-    console.error(`Error fetching cover IDs for ${workKey}:`, error)
-    return []
-  }
-}
-
-export function useBookCovers() {
+export const useBookCovers = () => {
   const [books, setBooks] = useState<Book[]>([])
+  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
-  const [buffer, setBuffer] = useState<Book[]>([])
 
-  const fetchBooks = useCallback(
-    async (forBuffer = false) => {
-      if (loading) {
-        return
-      }
-
-      setLoading(true)
-
+  // Helper function to fetch all covers for a book
+  const fetchAllCoversForBook = useCallback(
+    async (bookKey: string, initialCoverId?: string): Promise<string[]> => {
       try {
-        // Generate a random offset for variety in results
-        const randomOffset = Math.floor(Math.random() * 1000)
+        // Fetch the work data to get all cover IDs
+        const workResponse = await fetch(`https://openlibrary.org${bookKey}.json`)
+        const workData = await workResponse.json()
 
-        // Using Open Library search API to get random books
-        const response = await fetch(
-          `https://openlibrary.org/search.json?q=subject:fiction&limit=5&offset=${randomOffset}&has_fulltext=true`,
-        )
-
-        const data = await response.json()
-
-        const booksWithoutDescriptions: Book[] = (data as OpenLibrarySearchResponse).docs
-          .filter((book: OpenLibraryDoc) => book.cover_i) // Ensure books have covers
-          .map((book: OpenLibraryDoc): Book => {
-            const coverId: number = book.cover_i
-            // Use the large cover images
-            const coverUrl: string = `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
-
-            return {
-              title: book.title,
-              firstPublishYear: book.first_publish_year,
-              authors: book.author_name || ['Unknown Author'],
-              key: book.key,
-              coverId,
-              coverUrl,
-              description: undefined, // Will be populated later
-              covers: [], // Will be populated later with edition IDs
-            }
-          })
-
-        // Add books to state immediately before fetching descriptions
-        // This allows displaying the books faster
-        if (forBuffer) {
-          setBuffer(booksWithoutDescriptions)
-        } else {
-          setBooks(prev => [...prev, ...booksWithoutDescriptions])
+        // If the work has covers, use those
+        if (workData.covers && Array.isArray(workData.covers) && workData.covers.length > 0) {
+          // Filter out cover IDs with value -1 before returning
+          return workData.covers
+            .filter((id: number) => id !== -1 && id.toString() !== '-1')
+            .map((id: number) => id.toString())
         }
 
-        // Preload the first few images immediately
-        if (booksWithoutDescriptions.length > 0) {
-          // Only preload the first 2-3 images immediately
-          booksWithoutDescriptions
-            .slice(0, 3)
-            .forEach(book => preloadImage(book.coverUrl).catch(console.error))
+        // If no covers found but we have an initial cover ID, return that
+        if (initialCoverId) {
+          return [initialCoverId]
         }
 
-        // Fetch descriptions in the background
-        const enhanceWithDescriptions = async () => {
-          try {
-            // Create arrays of promises for fetching descriptions and cover IDs in parallel
-            const descriptionPromises = booksWithoutDescriptions.map(book =>
-              fetchBookDescription(book.key),
-            )
-            const coverIdsPromises = booksWithoutDescriptions.map(book => fetchCoverIds(book.key))
-
-            // Fetch all data in parallel
-            const [descriptions, allCoverIds] = await Promise.all([
-              Promise.all(descriptionPromises),
-              Promise.all(coverIdsPromises),
-            ])
-
-            // Assign descriptions and cover IDs to the corresponding books
-            const enhancedBooks = booksWithoutDescriptions.map((book, index) => {
-              // Get the cover IDs but ensure the original cover ID is included first
-              let editionCovers = allCoverIds[index].filter(id => id > 0).map(id => id.toString())
-
-              // Convert the original coverId to string for consistency
-              const originalCoverId = book.coverId.toString()
-
-              // If the original cover ID isn't in the list, add it as the first item
-              if (!editionCovers.includes(originalCoverId)) {
-                editionCovers = [originalCoverId, ...editionCovers]
-              } else {
-                // If it is in the list but not first, move it to the first position
-                editionCovers = [
-                  originalCoverId,
-                  ...editionCovers.filter(id => id !== originalCoverId),
-                ]
-              }
-
-              return {
-                ...book,
-                description: descriptions[index],
-                covers: editionCovers,
-              }
-            })
-
-            console.log('Enhanced books:', enhancedBooks)
-
-            // Update books with descriptions and cover IDs
-            if (forBuffer) {
-              setBuffer(enhancedBooks)
-            } else {
-              setBooks(prev =>
-                prev.map(book => {
-                  const enhancedBook = enhancedBooks.find(eb => eb.key === book.key)
-                  return enhancedBook || book
-                }),
-              )
-            }
-
-            // Preload remaining images in the background
-            Promise.allSettled(enhancedBooks.slice(1).map(book => preloadImage(book.coverUrl)))
-          } catch (error) {
-            console.error('Error enhancing books with additional data:', error)
-          }
-        }
-
-        // Start the background process
-        enhanceWithDescriptions()
-
-        // If we're loading the main list, also start preparing the buffer
-        if (!forBuffer) {
-          fetchBooks(true)
-        }
+        // Default empty array if no covers found
+        return []
       } catch (error) {
-        console.error('Error fetching books:', error)
+        console.error('Error fetching book covers:', error)
+        // Return the initial cover ID if available
+        return initialCoverId ? [initialCoverId] : []
       }
-      setLoading(false)
     },
-    [loading, setLoading, setBooks, setBuffer],
+    [],
   )
 
-  const getMoreBooks = useCallback(() => {
-    if (buffer.length > 0) {
-      setBooks(prev => [...prev, ...buffer])
-      setBuffer([])
-      fetchBooks(true)
-    } else {
-      fetchBooks(false)
-    }
-  }, [buffer, fetchBooks])
+  // Helper function to process a book
+  const processBookData = useCallback(
+    async (book: OpenLibraryBook) => {
+      // Extract first 300 words of description if available
+      let description = 'No description available'
 
-  return { books, loading, fetchBooks: getMoreBooks }
+      if (book.key) {
+        try {
+          const workResponse = await fetch(`https://openlibrary.org${book.key}.json`)
+          const workData = await workResponse.json()
+          if (workData.description) {
+            if (typeof workData.description === 'string') {
+              description = workData.description
+            } else if (typeof workData.description.value === 'string') {
+              description = workData.description.value
+            }
+
+            // Limit to roughly first 300 words
+            const words = description.split(' ')
+            if (words.length > 300) {
+              description = words.slice(0, 300).join(' ') + '...'
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching book description:', error)
+        }
+      }
+
+      // Get all cover IDs for this book
+      const allCovers = await fetchAllCoversForBook(book.key, book.cover_i?.toString())
+
+      return {
+        key: book.key,
+        title: book.title,
+        covers: allCovers,
+        authors: book.author_name,
+        description,
+        coverUrl: book.cover_i
+          ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
+          : undefined,
+        firstPublishYear: book.first_publish_year,
+      }
+    },
+    [fetchAllCoversForBook],
+  )
+
+  const buildSearchUrl = useCallback((subject?: string) => {
+    const baseUrl = 'https://openlibrary.org/search.json'
+    const subjectParam = subject ? `subject:${subject}` : ''
+    const queryParam = subject ? subjectParam : 'science_fiction'
+
+    // Get number of works for the selected subject from BOOK_SUBJECTS
+    // Default to 1000 if not found or no subject selected
+    let maxOffset = 1000
+
+    if (subject) {
+      const subjectInfo = BOOK_SUBJECTS.find(s => s.value === subject)
+      if (subjectInfo && subjectInfo.numberOfWorks) {
+        // Cap at 90% of total works to stay within bounds
+        maxOffset = Math.floor(subjectInfo.numberOfWorks * 0.9)
+      }
+    }
+
+    const randomOffset = Math.floor(Math.random() * maxOffset)
+    return `${baseUrl}?q=${queryParam}&limit=5&offset=${randomOffset}&has_fulltext=true`
+  }, [])
+
+  const fetchAndProcessBooks = useCallback(
+    async (url: string) => {
+      const response = await fetch(url)
+      const data = await response.json()
+
+      if (!data.docs || !Array.isArray(data.docs)) {
+        return []
+      }
+
+      const filteredBooks = data.docs.filter(
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (book: any) => book.cover_i && book.title && book.author_name && book.key,
+      )
+
+      return Promise.all(filteredBooks.map(processBookData))
+    },
+    [processBookData],
+  )
+
+  const fetchBooks = useCallback(
+    async (subject?: string, reset: boolean = false) => {
+      try {
+        setLoading(true)
+
+        if (reset) {
+          setBooks([])
+          setPage(1)
+        }
+
+        const url = buildSearchUrl(subject)
+        const newBooks = await fetchAndProcessBooks(url)
+
+        setBooks(prev => (reset || page === 1 ? newBooks : [...prev, ...newBooks]))
+        setPage(prev => prev + 1)
+      } catch (error) {
+        console.error('Error fetching books:', error)
+      } finally {
+        setLoading(false)
+      }
+    },
+    [page, buildSearchUrl, fetchAndProcessBooks],
+  )
+
+  return { books, loading, fetchBooks }
 }
