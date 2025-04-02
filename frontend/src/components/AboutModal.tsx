@@ -19,7 +19,16 @@ const AboutModal: React.FC<AboutModalProps> = ({ showAbout, setShowAbout }) => {
         </button>
         <h2 className="text-xl font-bold mb-4">About Book-Tok</h2>
         <p className="mb-4">
-          A TikTok style interface for exploring random books from Open Library.
+          A TikTok style interface for exploring random books from{' '}
+          <a
+            href="https://openlibrary.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-white hover:underline"
+          >
+            Open Library
+          </a>
+          .
         </p>
         <p className="text-white/70">
           Made with ❤️ by{' '}
