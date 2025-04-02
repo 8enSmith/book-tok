@@ -277,12 +277,15 @@ function App() {
                 // The useEffect hook will handle clearing books and resetting page
               }}
             >
-              <SelectTrigger className="w-auto h-auto min-w-0 border-0 bg-transparent p-0 text-sm text-white/70 hover:text-white transition-colors shadow-none focus:ring-0 focus:ring-offset-0 focus:border-0">
+              <SelectTrigger
+                className="w-auto h-auto min-w-0 border-0 bg-transparent p-0 text-sm text-white/70 hover:text-white transition-colors shadow-none focus:ring-0 focus:ring-offset-0 focus:border-0"
+                aria-label="Select book category"
+              >
                 <SelectValue placeholder="Select subject" />
               </SelectTrigger>
               <SelectContent>
                 {BOOK_SUBJECTS.map(subject => (
-                  <SelectItem key={subject.value} value={subject.value}>
+                  <SelectItem key={subject.value} value={subject.value} aria-label={subject.label}>
                     {subject.label}
                   </SelectItem>
                 ))}
