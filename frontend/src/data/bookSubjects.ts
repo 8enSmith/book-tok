@@ -5,6 +5,7 @@ export const BOOK_SUBJECTS = [
   { value: 'history_of_art__art__design_styles', label: 'History of art', numberOfWorks: 439 },
   { value: 'juvenile_fiction', label: `Children's`, numberOfWorks: 165232 },
   { value: 'mystery_and_detective_stories', label: 'Mystery', numberOfWorks: 16147 },
+  { value: 'painting__paintings', label: 'Painting', numberOfWorks: 614 },
   { value: 'romance', label: 'Romance', numberOfWorks: 19749 },
   { value: 'sciencemathematics', label: 'Science & Mathematics', numberOfWorks: 7184 },
   { value: 'science_fiction', label: 'Science Fiction', numberOfWorks: 19493 },

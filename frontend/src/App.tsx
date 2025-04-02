@@ -47,6 +47,10 @@ function App() {
     'rgba(0,0,0,0.8)',
     'rgba(40,40,40,0.8)',
   ])
+  // Add a ref to track initial load
+  const initialLoadRef = useRef(false)
+  // Add a ref to track if initial fetch has completed
+  const initialFetchCompleteRef = useRef(false)
 
   // The minimum swipe distance (in px) to trigger a navigation
   const MIN_SWIPE_DISTANCE = 50
@@ -54,8 +58,8 @@ function App() {
   const handleObserver = useCallback(
     (entries: IntersectionObserverEntry[]) => {
       const [target] = entries
-      if (target.isIntersecting && !loading) {
-        fetchBooks(selectedSubject !== 'all' ? selectedSubject : undefined)
+      if (target.isIntersecting && !loading && initialLoadRef.current) {
+        fetchBooks(selectedSubject)
       }
     },
     [loading, fetchBooks, selectedSubject],
@@ -77,7 +81,13 @@ function App() {
   // Reset books and page counter when subject changes
   useEffect(() => {
     // Clear existing books and reset page counter in the hook
-    fetchBooks(selectedSubject !== 'all' ? selectedSubject : undefined, true)
+    // Only run this effect if it's not the initial render
+    // OR if this is the initial render but we haven't fetched yet
+    if (initialLoadRef.current || !initialFetchCompleteRef.current) {
+      fetchBooks(selectedSubject, true)
+      // Mark that we've completed the initial fetch
+      initialFetchCompleteRef.current = true
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSubject])
 
@@ -107,10 +117,17 @@ function App() {
   }
 
   // Track which book is currently visible in viewport
-  // Handle book becoming visible in the viewport
   const handleBookVisible = useCallback(
     (bookKey: string, backgroundColors?: string[]) => {
       setVisibleBookId(bookKey)
+
+      // Find the index of the current book
+      const index = books.findIndex(b => b.key === bookKey)
+      // If we're at the second book and not currently loading, fetch more books
+      // Only if we're past the initial load phase AND initial fetch is complete
+      if (index === 1 && !loading && initialLoadRef.current && initialFetchCompleteRef.current) {
+        fetchBooks(selectedSubject)
+      }
 
       // Update background colors if provided
       if (backgroundColors) {
@@ -136,7 +153,7 @@ function App() {
         }
       }
     },
-    [books, activeCovers],
+    [books, activeCovers, loading, fetchBooks, selectedSubject, initialLoadRef],
   )
 
   // Navigate to previous cover
@@ -222,6 +239,13 @@ function App() {
     setTouchStart(null)
     setTouchEnd(null)
   }, [touchStart, touchEnd, handleNextCover, handlePrevCover, shouldShowNavButtons])
+
+  // Set initialLoadRef to true after the first load completes
+  useEffect(() => {
+    if (books.length > 0 && !initialLoadRef.current) {
+      initialLoadRef.current = true
+    }
+  }, [books])
 
   return (
     <BackgroundColorContext.Provider value={currentBackgroundColors}>

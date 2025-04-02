@@ -122,7 +122,7 @@ export const useBookCovers = () => {
     }
 
     const randomOffset = Math.floor(Math.random() * maxOffset)
-    return `${baseUrl}?q=${queryParam}&limit=5&offset=${randomOffset}&has_fulltext=true`
+    return `${baseUrl}?q=${queryParam}&limit=3&offset=${randomOffset}&has_fulltext=true`
   }, [])
 
   const fetchAndProcessBooks = useCallback(
