@@ -15,8 +15,6 @@ import {
   SelectValue,
 } from './components/ui/select'
 
-injectSpeedInsights()
-
 // Define the lazy-loaded components outside the App function
 // The imports won't actually happen until the components are rendered
 const LikedBooksModal = lazy(() => import('./components/LikedBooksModal'))
@@ -25,6 +23,10 @@ const AboutModal = lazy(() => import('./components/AboutModal'))
 const getCoverUrl = (coverId: string) => `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
 
 function App() {
+  useEffect(() => {
+    injectSpeedInsights()
+  }, [])
+
   const [showAbout, setShowAbout] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
   // Track if the user has clicked the buttons at least once
