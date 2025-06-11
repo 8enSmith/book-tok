@@ -2,7 +2,6 @@ import { useEffect, useRef, useCallback, useState, TouchEvent, lazy, Suspense } 
 import { BookCard } from './components/BookCard'
 import { Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Analytics } from '@vercel/analytics/react'
-import { injectSpeedInsights } from '@vercel/speed-insights'
 import { useLikedArticles } from './hooks/useLikedArticles'
 import { useBookCovers } from './hooks/useBookCovers'
 import { BackgroundColorContext } from './contexts/BackgroundColorContext'
@@ -23,10 +22,6 @@ const AboutModal = lazy(() => import('./components/AboutModal'))
 const getCoverUrl = (coverId: string) => `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
 
 function App() {
-  useEffect(() => {
-    injectSpeedInsights()
-  }, [])
-
   const [showAbout, setShowAbout] = useState(false)
   const [showLikes, setShowLikes] = useState(false)
   // Track if the user has clicked the buttons at least once
