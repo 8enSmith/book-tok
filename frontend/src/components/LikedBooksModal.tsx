@@ -68,10 +68,7 @@ const LikedBooksModal: React.FC<LikedBooksModalProps> = ({
           ) : (
             <div className="space-y-4">
               {filteredLikedArticles.map(article => (
-                <div
-                  key={`${article.pageid}-${Date.now()}`}
-                  className="flex gap-4 items-start group"
-                >
+                <div key={article.pageid} className="flex gap-4 items-start group">
                   {article.thumbnail && (
                     <img
                       src={article.thumbnail.source}
