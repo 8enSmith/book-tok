@@ -26,83 +26,54 @@ export const useBookCovers = () => {
   const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
 
-  // Helper function to fetch all covers for a book
-  const fetchAllCoversForBook = useCallback(
-    async (bookKey: string, initialCoverId?: string): Promise<string[]> => {
+  const extractDescription = (workData: { description?: string | { value: string } }): string => {
+    if (!workData.description) return 'No description available'
+
+    const raw =
+      typeof workData.description === 'string'
+        ? workData.description
+        : (workData.description.value ?? 'No description available')
+
+    const words = raw.split(' ')
+    return words.length > 300 ? words.slice(0, 300).join(' ') + '...' : raw
+  }
+
+  const extractCovers = (workData: { covers?: number[] }, initialCoverId?: string): string[] => {
+    if (workData.covers && Array.isArray(workData.covers) && workData.covers.length > 0) {
+      return workData.covers
+        .filter((id: number) => id !== -1 && id.toString() !== '-1')
+        .map((id: number) => id.toString())
+    }
+    return initialCoverId ? [initialCoverId] : []
+  }
+
+  const processBookData = useCallback(async (book: OpenLibraryBook) => {
+    let description = 'No description available'
+    let allCovers: string[] = book.cover_i ? [book.cover_i.toString()] : []
+
+    if (book.key) {
       try {
-        // Fetch the work data to get all cover IDs
-        const workResponse = await fetch(`https://openlibrary.org${bookKey}.json`)
+        const workResponse = await fetch(`https://openlibrary.org${book.key}.json`)
         const workData = await workResponse.json()
-
-        // If the work has covers, use those
-        if (workData.covers && Array.isArray(workData.covers) && workData.covers.length > 0) {
-          // Filter out cover IDs with value -1 before returning
-          return workData.covers
-            .filter((id: number) => id !== -1 && id.toString() !== '-1')
-            .map((id: number) => id.toString())
-        }
-
-        // If no covers found but we have an initial cover ID, return that
-        if (initialCoverId) {
-          return [initialCoverId]
-        }
-
-        // Default empty array if no covers found
-        return []
+        description = extractDescription(workData)
+        allCovers = extractCovers(workData, book.cover_i?.toString())
       } catch (error) {
-        console.error('Error fetching book covers:', error)
-        // Return the initial cover ID if available
-        return initialCoverId ? [initialCoverId] : []
+        console.error('Error fetching book data:', error)
       }
-    },
-    [],
-  )
+    }
 
-  // Helper function to process a book
-  const processBookData = useCallback(
-    async (book: OpenLibraryBook) => {
-      // Extract first 300 words of description if available
-      let description = 'No description available'
-
-      if (book.key) {
-        try {
-          const workResponse = await fetch(`https://openlibrary.org${book.key}.json`)
-          const workData = await workResponse.json()
-          if (workData.description) {
-            if (typeof workData.description === 'string') {
-              description = workData.description
-            } else if (typeof workData.description.value === 'string') {
-              description = workData.description.value
-            }
-
-            // Limit to roughly first 300 words
-            const words = description.split(' ')
-            if (words.length > 300) {
-              description = words.slice(0, 300).join(' ') + '...'
-            }
-          }
-        } catch (error) {
-          console.error('Error fetching book description:', error)
-        }
-      }
-
-      // Get all cover IDs for this book
-      const allCovers = await fetchAllCoversForBook(book.key, book.cover_i?.toString())
-
-      return {
-        key: book.key,
-        title: book.title,
-        covers: allCovers,
-        authors: book.author_name,
-        description,
-        coverUrl: book.cover_i
-          ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
-          : undefined,
-        firstPublishYear: book.first_publish_year,
-      }
-    },
-    [fetchAllCoversForBook],
-  )
+    return {
+      key: book.key,
+      title: book.title,
+      covers: allCovers,
+      authors: book.author_name,
+      description,
+      coverUrl: book.cover_i
+        ? `https://covers.openlibrary.org/b/id/${book.cover_i}-L.jpg`
+        : undefined,
+      firstPublishYear: book.first_publish_year,
+    }
+  }, [])
 
   const buildSearchUrl = useCallback((subject?: string) => {
     const baseUrl = 'https://openlibrary.org/search.json'
