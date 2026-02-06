@@ -380,19 +380,9 @@ function App() {
             // If this is the first book and it has no active cover yet but has editions,
             // preserve the initial cover instead of immediately switching
             else if (book.covers && book.covers.length > 0) {
-              // Only update activeCovers if it hasn't been set yet AND
-              // if this isn't the first visible book (or user has already interacted with covers)
               if (!activeCovers[bookKey] && visibleBookId !== bookKey) {
                 const coverId = book.covers[0]
                 coverUrl = getCoverUrl(coverId.toString())
-              }
-              // Use the original cover if this is the first visible book
-              else if (!activeCovers[bookKey]) {
-                // We'll initialize activeCovers with the original cover to prevent future updates
-                setActiveCovers(prev => ({
-                  ...prev,
-                  [bookKey]: { index: 0, url: book.coverUrl || '/placeholder-cover.jpg' },
-                }))
               }
             }
 
