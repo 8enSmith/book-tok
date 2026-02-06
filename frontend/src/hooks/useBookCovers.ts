@@ -23,7 +23,6 @@ interface OpenLibraryBook {
 
 export const useBookCovers = () => {
   const [books, setBooks] = useState<Book[]>([])
-  const [page, setPage] = useState(1)
   const [loading, setLoading] = useState(false)
 
   const extractDescription = (workData: { description?: string | { value: string } }): string => {
@@ -122,21 +121,19 @@ export const useBookCovers = () => {
 
         if (reset) {
           setBooks([])
-          setPage(1)
         }
 
         const url = buildSearchUrl(subject)
         const newBooks = await fetchAndProcessBooks(url)
 
-        setBooks(prev => (reset || page === 1 ? newBooks : [...prev, ...newBooks]))
-        setPage(prev => prev + 1)
+        setBooks(prev => (reset ? newBooks : [...prev, ...newBooks]))
       } catch (error) {
         console.error('Error fetching books:', error)
       } finally {
         setLoading(false)
       }
     },
-    [page, buildSearchUrl, fetchAndProcessBooks],
+    [buildSearchUrl, fetchAndProcessBooks],
   )
 
   return { books, loading, fetchBooks }
