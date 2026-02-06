@@ -36,7 +36,6 @@ function App() {
   const [activeCovers, setActiveCovers] = useState<Record<string, { index: number; url: string }>>(
     {},
   )
-  const [forceUpdate, setForceUpdate] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   // Add state to track the current book's background colors
@@ -169,9 +168,6 @@ function App() {
       ...prev,
       [visibleBookId]: { index: newIndex, url: newCoverUrl },
     }))
-
-    // Force a re-render
-    setForceUpdate(prev => prev + 1)
   }, [visibleBookId, books, activeCovers])
 
   // Navigate to next cover
@@ -190,9 +186,6 @@ function App() {
       ...prev,
       [visibleBookId]: { index: newIndex, url: newCoverUrl },
     }))
-
-    // Force a re-render
-    setForceUpdate(prev => prev + 1)
   }, [visibleBookId, books, activeCovers])
 
   // Determine if navigation buttons should be visible
@@ -388,7 +381,7 @@ function App() {
 
             return (
               <BookCard
-                key={`${bookKey}-${forceUpdate}-${coverIndex}`}
+                key={bookKey}
                 article={{
                   pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
                   authors: book.authors || ['Unknown Author'],
