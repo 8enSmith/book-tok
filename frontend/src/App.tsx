@@ -36,7 +36,6 @@ function App() {
   const [activeCovers, setActiveCovers] = useState<Record<string, { index: number; url: string }>>(
     {},
   )
-  const [forceUpdate, setForceUpdate] = useState(0)
   const [touchStart, setTouchStart] = useState<number | null>(null)
   const [touchEnd, setTouchEnd] = useState<number | null>(null)
   // Add state to track the current book's background colors
@@ -169,9 +168,6 @@ function App() {
       ...prev,
       [visibleBookId]: { index: newIndex, url: newCoverUrl },
     }))
-
-    // Force a re-render
-    setForceUpdate(prev => prev + 1)
   }, [visibleBookId, books, activeCovers])
 
   // Navigate to next cover
@@ -190,9 +186,6 @@ function App() {
       ...prev,
       [visibleBookId]: { index: newIndex, url: newCoverUrl },
     }))
-
-    // Force a re-render
-    setForceUpdate(prev => prev + 1)
   }, [visibleBookId, books, activeCovers])
 
   // Determine if navigation buttons should be visible
@@ -380,25 +373,15 @@ function App() {
             // If this is the first book and it has no active cover yet but has editions,
             // preserve the initial cover instead of immediately switching
             else if (book.covers && book.covers.length > 0) {
-              // Only update activeCovers if it hasn't been set yet AND
-              // if this isn't the first visible book (or user has already interacted with covers)
               if (!activeCovers[bookKey] && visibleBookId !== bookKey) {
                 const coverId = book.covers[0]
                 coverUrl = getCoverUrl(coverId.toString())
-              }
-              // Use the original cover if this is the first visible book
-              else if (!activeCovers[bookKey]) {
-                // We'll initialize activeCovers with the original cover to prevent future updates
-                setActiveCovers(prev => ({
-                  ...prev,
-                  [bookKey]: { index: 0, url: book.coverUrl || '/placeholder-cover.jpg' },
-                }))
               }
             }
 
             return (
               <BookCard
-                key={`${bookKey}-${forceUpdate}-${coverIndex}`}
+                key={bookKey}
                 article={{
                   pageid: parseInt(book.key?.replace(/\D/g, '') || '0', 10),
                   authors: book.authors || ['Unknown Author'],

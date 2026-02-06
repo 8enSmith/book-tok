@@ -48,6 +48,7 @@ export const BookCard: React.FC<BookCardProps> = memo(
     ])
     const { toggleLike, isLiked } = useLikedArticles()
     const cardRef = useRef<HTMLDivElement>(null)
+    const imgRef = useRef<HTMLImageElement>(null)
     const [imageError, setImageError] = useState(false)
     const [imageUrl, setImageUrl] = useState<string>(article.thumbnail.source)
     const [isExtractExpanded, setIsExtractExpanded] = useState(false)
@@ -57,39 +58,21 @@ export const BookCard: React.FC<BookCardProps> = memo(
       setIsExtractExpanded(!isExtractExpanded)
     }
 
-    // Reset image error state when cover index changes
     useEffect(() => {
       setImageError(false)
       setImageLoaded(false)
     }, [coverIndex])
 
-    // Preload image and extract colors at the same time
-    useEffect(() => {
-      if (article.thumbnail?.source) {
-        const img = new Image()
-        img.crossOrigin = 'anonymous'
-        img.src = article.thumbnail.source
-
-        img.onload = () => {
-          // Both extract colors and set image loaded state
-          extractColorsFromImage(article.thumbnail.source)
-            .then(colors => {
-              setBackgroundColors(colors)
-              setImageLoaded(true)
-            })
-            .catch(error => {
-              console.error('Failed to extract colors:', error)
-              setImageLoaded(true)
-            })
-        }
-
-        img.onerror = () => {
-          console.error('Failed to load image')
-          setImageError(true)
+    const handleImageLoad = () => {
+      extractColorsFromImage(article.thumbnail.source)
+        .then(colors => {
+          setBackgroundColors(colors)
           setImageLoaded(true)
-        }
-      }
-    }, [article.thumbnail?.source])
+        })
+        .catch(() => {
+          setImageLoaded(true)
+        })
+    }
 
     useEffect(() => {
       if (!cardRef.current || !onVisible) return
@@ -194,8 +177,9 @@ export const BookCard: React.FC<BookCardProps> = memo(
                   ${imageSource} 1200w
                 `}
                   sizes="(max-width: 640px) 90vw, (max-width: 1024px) 75vw, 50vw"
+                  ref={imgRef}
                   loading="eager"
-                  onLoad={() => setImageLoaded(true)}
+                  onLoad={handleImageLoad}
                   onError={handleImageError}
                   crossOrigin="anonymous"
                 />
